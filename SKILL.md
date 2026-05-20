@@ -1,9 +1,11 @@
 ---
 name: explanatory-animations
-description: Animate explanations for any topic — system flows, lifecycles, algorithms, mechanical motion, orbits, particle systems, neural network internals, math derivations, geographic flows, and more. Use this skill when the user says "animate", "visualize", "show step by step", "ByteByteGo style", "explain X with motion", "interactive diagram", or describes a process that needs to be replayable. Asks the user about pattern, palette, typography, assets, and export before generating code.
+description: Build polished interactive animations for any topic — system flows, lifecycles, algorithms, mechanical motion, orbits, particle systems, neural network internals, math derivations, geographic flows, text reveals for social videos, big number counters, shape morphing, SVG line drawing, sound waves, and more. Use this skill when the user says "animate", "visualize", "show step by step", "ByteByteGo style", "scramble text", "make a counter", "draw a wave", "social media intro", or describes any motion that should be replayable and controllable. Asks the user about pattern, palette, typography, assets, and export before generating code. Uses Anime.js v4.
 ---
 
-Build **didactic animations** — interactive, replayable, controllable visualizations where motion teaches. Twelve patterns cover state machines, system maps, mechanical motion, orbits, particle flow, layered transformations, math derivations, geographic flows, cross-sections, and timelines. Shared visual language (palette, typography, controls strip) across every pattern.
+Build **interactive animations** — replayable, controllable visualizations that either **teach a concept** (didactic) or **capture attention on social media** (creator-focused). Sixteen patterns share one visual language (palette / typography / controls strip).
+
+**Engine:** Anime.js **v4** (`v4.1.x`). API is **incompatible with v3** — use `animate()`, `createTimeline()`, named imports, `ease` not `easing`. Full reference in [`engine/anime-cheatsheet.md`](./engine/anime-cheatsheet.md).
 
 ## When this skill runs
 
@@ -41,7 +43,9 @@ If any rule is broken, redo it.
 
 ## Pattern catalog
 
-Twelve patterns, each in its own doc under [`patterns/`](./patterns/). Pick by what's being explained:
+Sixteen patterns in two families. Each has its own doc under [`patterns/`](./patterns/). Pick by what's being explained or by the creator effect needed.
+
+### Family 1 — Didactic (teach a concept)
 
 | Code | Pattern | Use for |
 |---|---|---|
@@ -58,7 +62,17 @@ Twelve patterns, each in its own doc under [`patterns/`](./patterns/). Pick by w
 | **K** | [Cross-section / stack](./patterns/K-cross-section.md) | Literal stacked layers: OSI, memory hierarchy |
 | **L** | [Timeline / sequence](./patterns/L-timeline.md) | Time-axis explanations: handshakes, signals |
 
-Tie-breaker order: L → A → B → I → K → F → G → H → J → C → D → E.
+### Family 2 — Content-creator (capture attention)
+
+| Code | Pattern | Use for |
+|---|---|---|
+| **M** | [Text effects](./patterns/M-text-effects.md) | Scramble, split, stagger, magnet, wave, type-on, mask reveal |
+| **N** | [Numeric counter / clock](./patterns/N-counter.md) | Big number reveals, star counters, ticking clocks |
+| **O** | [Shape morph / layered transforms](./patterns/O-shape-morph.md) | Abstract geometry loops, polygon mutation, generative bg |
+| **P** | [SVG line drawing](./patterns/P-svg-line-drawing.md) | Sound waves, sonar, route reveals, signatures, sine traces |
+
+Tie-breaker for didactic: L → A → B → I → K → F → G → H → J → C → D → E.
+For creator content the user picks the effect directly — there's rarely a "wrong" choice among M/N/O/P.
 
 ## Shared style references
 
