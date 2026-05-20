@@ -56,8 +56,10 @@ explanatory-animations/
 1. **User says** "animate this", "visualize X", "ByteByteGo style", "show step by step", etc.
 2. **Claude runs the discovery protocol** (5 quick questions: topic, pattern, style, complexity, interactivity).
 3. **User answers**, or says "you choose" for any step.
-4. **Claude picks the pattern** from the catalog of 12, references the relevant pattern doc + style libraries.
-5. **Claude generates** a self-contained HTML widget with controls, anime.js animations, and the right palette/typography/icons.
+4. **Claude picks the pattern** from the catalog of 16, reads the relevant `patterns/X-name.md` + the style library refs.
+5. **Claude generates** a self-contained HTML widget from scratch using the skeleton in the pattern doc — no need to open any example file. Each pattern doc contains a complete code skeleton + variants + pitfalls; the library docs supply the palette / typography / icons / controls / timing / export contract.
+
+> **`examples/` is reference material, not a dependency.** The pattern docs are self-contained — Claude shouldn't need to read an example file to build the animation. Examples exist so a human can visually preview "what does Pattern N feel like" or so Claude can sanity-check an unfamiliar effect by opening one. Treat them like the Anime.js homepage demos: nice to look at, optional to consult.
 
 ## Install
 

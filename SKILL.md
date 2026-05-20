@@ -104,11 +104,16 @@ For creator content the user picks the effect directly — there's rarely a "wro
 
 Full spec in [`library/controls.md`](./library/controls.md).
 
-## Quick start
+## How to build a widget
 
-For a hand-rolled widget, copy `examples/lifecycle.html` as a starting point and adapt to your pattern's needs. The example is fully self-contained (one HTML file with inlined CSS + JS, plus the anime.js CDN) — no build step required.
+Each pattern doc (`patterns/X-name.md`) contains:
+- A complete **Anime.js skeleton** section with copy-paste starting code
+- The required input shape (data the user must provide)
+- Variants and pitfalls specific to that pattern
 
-For each pattern, use the **Anime.js skeleton** section in its pattern doc as the reference for the timeline structure.
+Combine with the shared style libraries (`library/colors.md`, `typography.md`, `controls.md`, `timing.md`) to generate a complete self-contained HTML widget — no build step, just one `.html` file with inlined CSS + JS + Anime.js v4 from `esm.sh`.
+
+The `examples/` folder is **optional reference material** for humans who want to preview "what does Pattern N feel like." Pattern docs are self-contained — building a new animation does not require opening an example file.
 
 ## Output checklist (self-grade before declaring done)
 
