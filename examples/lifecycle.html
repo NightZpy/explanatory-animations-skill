@@ -44,6 +44,12 @@
   <script type="module">
     import { animate, createTimeline, stagger, utils } from "https://esm.sh/animejs@4.1.4";
 
+
+      // Export hook: expose timeline + honor ?clean=1
+      const params = new URLSearchParams(location.search);
+      const clean = params.get('clean') === '1';
+      if (clean) document.querySelectorAll('.controls, .sm-controls, [data-controls]').forEach(el => el.style.display = 'none');
+
     const cfg = {
       title: "Job lifecycle",
       viewBox: "0 0 720 240",
@@ -170,6 +176,7 @@
         onComplete: () => { setStatus("done"); playBtn.disabled = false; pauseBtn.disabled = true; },
       });
       timeline = tl;
+      window.timeline = tl;
 
       for (let i = 1; i < seq.length; i++) {
         const prev = cfg.nodes.find(n => n.id === seq[i - 1]);

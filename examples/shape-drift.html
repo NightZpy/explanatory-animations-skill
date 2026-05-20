@@ -41,6 +41,12 @@
   <script type="module">
     import { createTimeline, utils, createSpring } from "https://esm.sh/animejs@4.1.4";
 
+
+      // Export hook: expose timeline + honor ?clean=1
+      const params = new URLSearchParams(location.search);
+      const clean = params.get('clean') === '1';
+      if (clean) document.querySelectorAll('.controls, .sm-controls, [data-controls]').forEach(el => el.style.display = 'none');
+
     const shapes = document.querySelectorAll(".shape");
     const eases = ["inOutQuad", "inOutCirc", "inOutSine", createSpring()];
     const trianglePoints = [48, 17.28, 86.4, 80.12, 9.6, 80.12];
@@ -64,6 +70,7 @@
           translateY: makeKeyframes(() => utils.random(-3, 3) + "rem"),
           rotate: makeKeyframes(() => utils.random(-180, 180)),
         }, 0);
+      window.timeline = tl;
 
       if (circle) tl.add(circle, {
         r: makeKeyframes(() => utils.random(24, 56)),

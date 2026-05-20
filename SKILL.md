@@ -81,7 +81,7 @@ For creator content the user picks the effect directly — there's rarely a "wro
 - [`library/icons.md`](./library/icons.md) — emoji vs Lucide vs custom SVG vs user-provided
 - [`library/controls.md`](./library/controls.md) — controls strip spec (Play/Pause/Restart/Speed/Path/Status)
 - [`library/timing.md`](./library/timing.md) — duration/delay/easing reference table
-- [`library/export.md`](./library/export.md) — export-to-video pipeline (CCapture + Puppeteer + manual)
+- [`library/export.md`](./library/export.md) — export-to-video pipeline (bundled `scripts/export-widget.py` + manual recording + CCapture + Puppeteer + Remotion roadmap)
 
 ## Engine
 

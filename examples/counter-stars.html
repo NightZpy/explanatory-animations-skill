@@ -40,6 +40,12 @@
   <script type="module">
     import { animate, createTimeline, utils } from "https://esm.sh/animejs@4.1.4";
 
+
+      // Export hook: expose timeline + honor ?clean=1
+      const params = new URLSearchParams(location.search);
+      const clean = params.get('clean') === '1';
+      if (clean) document.querySelectorAll('.controls, .sm-controls, [data-controls]').forEach(el => el.style.display = 'none');
+
     const stage = document.getElementById("stage");
     const button = stage.querySelector(".star-button");
     const label = stage.querySelector(".label");
@@ -76,6 +82,7 @@
       label.textContent = "Star";
 
       const tl = createTimeline({ autoplay: false });
+      window.timeline = tl;
 
       // Step 1: First star (slow click)
       tl.add(button, { scale: [1, .94, 1], duration: 600, ease: "out(4)" })

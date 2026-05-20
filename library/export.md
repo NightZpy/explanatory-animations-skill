@@ -1,6 +1,6 @@
 # Export to video
 
-Three strategies, pick based on user requirements (resolution, fps, automation).
+Four strategies, pick based on automation needs and what's installed. The first (the bundled script) is the path the skill recommends by default — the others stay documented so power users have options.
 
 ## Ask the user first
 
@@ -12,6 +12,70 @@ When the user requests video export, confirm:
 4. **Duration cap**: total seconds. If shorter than the animation at 1×, time-compress.
 5. **Format**: `mp4 (H.264)` / `webm (VP9)` / `gif` (only if ≤6 s, animations longer than that should be video)
 6. **With audio?** If yes, ask for narration script or background music track.
+
+## Strategy 0 — The bundled `scripts/export-widget.py` (recommended)
+
+The skill ships a one-shot Python script that drives the widget headlessly via **Playwright + Chromium**, screenshots every frame, and assembles the MP4 with **ffmpeg**. Supports optional narration + background music mixing.
+
+```bash
+# Install once
+pip install playwright
+python3 -m playwright install chromium
+# (ffmpeg is also required — `brew install ffmpeg` / `apt install ffmpeg`)
+
+# Export
+python3 ${CLAUDE_SKILL_DIR}/scripts/export-widget.py \
+    --widget my-widget.html \
+    --resolution 1080x1920 \
+    --fps 60 \
+    --duration 6 \
+    --out reel.mp4
+
+# With narration + music
+python3 ${CLAUDE_SKILL_DIR}/scripts/export-widget.py \
+    --widget my-widget.html \
+    --resolution 1920x1080 \
+    --fps 60 \
+    --duration 10 \
+    --narration voiceover.mp3 \
+    --music    background.mp3 \
+    --out      final.mp4
+```
+
+**Conventions the widget MUST follow** for the script to work:
+
+1. Expose its master timeline as `window.timeline` so the script can call `window.timeline.seek(t_ms)` frame-by-frame.
+2. Honor `?clean=1` URL param to hide the controls strip during recording.
+3. Wait for `document.fonts.ready` before any layout-sensitive work.
+
+All bundled examples follow these conventions. When you generate a new widget from a pattern doc, follow the same — it's a 3-line addition:
+
+```js
+const tl = createTimeline({ /* ... */ });
+window.timeline = tl;                                                // ← convention
+const clean = new URLSearchParams(location.search).get("clean") === "1";
+if (clean) document.querySelectorAll(".controls").forEach(el => el.style.display = "none");
+```
+
+Output reference:
+- 1080p 60fps 10s ≈ 8-15 MB
+- 4K 60fps 10s ≈ 25-40 MB
+- 9:16 1080×1920 60fps 6s ≈ 6-10 MB
+
+CLI flags (run `--help` for the full list):
+
+| Flag | Default | Notes |
+|---|---|---|
+| `--widget` | required | Path to the HTML file |
+| `--resolution` | `1920x1080` | `1080x1920` for shorts, `1080x1080` for square |
+| `--fps` | `60` | `30` for smaller files, `60` for smoothness |
+| `--duration` | `6` | Seconds to capture |
+| `--out` | `video.mp4` | Output path |
+| `--device-scale` | `2` | DPR for crisp text |
+| `--narration` | — | Optional audio overlay (full volume) |
+| `--music` | — | Optional background (mixed at 15% under narration) |
+| `--crf` | `18` | x264 quality (lower = better, larger) |
+| `--preset` | `slow` | x264 preset |
 
 ## Strategy 1 — Manual screen recording (fastest, no setup)
 
@@ -156,6 +220,32 @@ ffmpeg -i video.mp4 -i music.mp3 -filter_complex \
 ```
 
 (Adjust `volume=0.15` to taste — music should sit well under narration.)
+
+## Roadmap — Remotion integration
+
+[Remotion](https://www.remotion.dev) is a React-based programmatic video framework: write components → render with `npx remotion render` → get an MP4. It's an excellent alternative for use cases the current pipeline doesn't cover cleanly:
+
+- **In-browser export button** — a Remotion preview app served by the skill where the user previews the animation, clicks "Export", and downloads the MP4 without needing local ffmpeg or Playwright installed.
+- **Server-side rendering at scale** — Remotion Lambda renders 100s of variants in parallel (e.g. personalized reels per customer).
+- **Component reuse with the widgets** — port a pattern's anime.js + SVG output into a `<Composition>` so the same animation works both as a standalone HTML widget (for embedding in docs) and as a Remotion clip (for batch video rendering).
+
+Why not now: Remotion requires a React+Node toolchain, which adds friction for the "I just want one MP4" case Strategy 0 already covers. The plan when it lands:
+
+```
+scripts/
+├── export-widget.py        # current — Playwright + ffmpeg (any HTML widget)
+└── export-remotion/        # planned — React + Remotion (composable, batchable, server-renderable)
+    ├── compositions/
+    │   ├── lifecycle.tsx
+    │   ├── system-flow.tsx
+    │   ├── text-effect.tsx
+    │   └── ...
+    └── render.config.ts
+```
+
+Plus a documented bridge: any anime.js timeline can be wrapped in a Remotion `<Composition>` by mapping `frame → seek(frame * 1000 / fps)`, so the same source-of-truth animation drives both the standalone HTML widget AND the Remotion render.
+
+**Want this now?** Tell the skill "use Remotion" and it can scaffold a React project that imports the widget's animation logic as a Remotion composition.
 
 ## Mistakes to avoid
 

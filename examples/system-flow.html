@@ -134,6 +134,12 @@
   <script type="module">
     import { animate, createTimeline, utils } from "https://esm.sh/animejs@4.1.4";
 
+
+      // Export hook: expose timeline + honor ?clean=1
+      const params = new URLSearchParams(location.search);
+      const clean = params.get('clean') === '1';
+      if (clean) document.querySelectorAll('.controls, .sm-controls, [data-controls]').forEach(el => el.style.display = 'none');
+
     const EDGES = [
       { from: "user",   to: "cf",     sf: "r", st: "l", label: "HTTPS",     num: 1 },
       { from: "cf",     to: "api",    sf: "b", st: "t", label: "proxy",     num: 2 },
@@ -252,6 +258,7 @@
         onComplete: () => { setStatus("done"); playBtn.disabled = false; pauseBtn.disabled = true; },
       });
       timeline = tl;
+      window.timeline = tl;
 
       PATH.forEach((ekey) => {
         const ed = built[ekey];
