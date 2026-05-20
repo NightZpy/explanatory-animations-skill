@@ -6,12 +6,12 @@ Five strategies, pick based on automation needs and what's installed. Strategy 0
 
 | You want… | Strategy |
 |---|---|
-| One MP4 from one widget, no Node | **0 — Python script** (`scripts/export-widget.py`) |
-| Live preview + Export button in browser, props panel | **4 — Remotion** (`scripts/export-remotion/`) |
+| **Autonomous: agent gives user a URL or MP4 with zero setup** | **0 — `scripts/render.py`** (auto-bootstraps deps in ~/.cache) |
+| Live preview + Render button in a Studio with props panel | **4 — Remotion** (`scripts/export-remotion/`) |
 | Server-side / Lambda render at scale, batch personalization | **4 — Remotion** (Lambda mode) |
 | Quick one-off demo, recording from screen | **1 — Manual** |
 | WebM frames-by-rAF without Node | **2 — CCapture.js** |
-| Custom Node+Puppeteer pipeline in CI | **3 — Puppeteer** |
+| Custom Node + Puppeteer pipeline in CI | **3 — Puppeteer** |
 
 ## Ask the user first
 
@@ -24,69 +24,74 @@ When the user requests video export, confirm:
 5. **Format**: `mp4 (H.264)` / `webm (VP9)` / `gif` (only if ≤6 s, animations longer than that should be video)
 6. **With audio?** If yes, ask for narration script or background music track.
 
-## Strategy 0 — The bundled `scripts/export-widget.py` (recommended)
+## Strategy 0 — `scripts/render.py` (autonomous, the skill's default)
 
-The skill ships a one-shot Python script that drives the widget headlessly via **Playwright + Chromium**, screenshots every frame, and assembles the MP4 with **ffmpeg**. Supports optional narration + background music mixing.
+The agent (not the user) invokes `scripts/render.py`. On first run it auto-bootstraps a private venv at `~/.cache/explanatory-animations/venv` with Playwright + Chromium + a bundled ffmpeg (via `imageio-ffmpeg`). The user installs nothing. Second run is cached and starts in <200ms.
+
+Two modes — `--out` flag chooses:
 
 ```bash
-# Install once
-pip install playwright
-python3 -m playwright install chromium
-# (ffmpeg is also required — `brew install ffmpeg` / `apt install ffmpeg`)
+# Preview URL — agent serves the widget on localhost and prints the URL
+python3 ${CLAUDE_SKILL_DIR}/scripts/render.py --widget /tmp/anim/widget.html
+#   → opens a browser tab + emits JSON: {"mode":"preview","url":"http://localhost:54321/widget.html"}
+#   → server runs until Ctrl+C or --timeout seconds
 
-# Export
-python3 ${CLAUDE_SKILL_DIR}/scripts/export-widget.py \
-    --widget my-widget.html \
+# MP4 file — render headlessly and write the file
+python3 ${CLAUDE_SKILL_DIR}/scripts/render.py \
+    --widget /tmp/anim/widget.html \
+    --out    /tmp/anim/reel.mp4 \
     --resolution 1080x1920 \
     --fps 60 \
-    --duration 6 \
-    --out reel.mp4
+    --duration 6
+#   → emits JSON: {"mode":"video","out":"...reel.mp4","size_kb":8345,...}
 
-# With narration + music
-python3 ${CLAUDE_SKILL_DIR}/scripts/export-widget.py \
-    --widget my-widget.html \
-    --resolution 1920x1080 \
-    --fps 60 \
-    --duration 10 \
+# With audio overlays
+python3 ${CLAUDE_SKILL_DIR}/scripts/render.py \
+    --widget   /tmp/anim/widget.html \
+    --out      /tmp/anim/final.mp4 \
+    --resolution 1920x1080 --fps 60 --duration 10 \
     --narration voiceover.mp3 \
-    --music    background.mp3 \
-    --out      final.mp4
+    --music     background.mp3
 ```
 
-**Conventions the widget MUST follow** for the script to work:
+For preview mode, `--timeout 90` is useful in agent contexts so the server doesn't hang forever; `--no-open` skips the browser auto-open. For video mode, `--device-scale 2` (the default) keeps text crisp at any output resolution.
 
-1. Expose its master timeline as `window.timeline` so the script can call `window.timeline.seek(t_ms)` frame-by-frame.
-2. Honor `?clean=1` URL param to hide the controls strip during recording.
-3. Wait for `document.fonts.ready` before any layout-sensitive work.
+### Widget conventions the agent MUST embed
 
-All bundled examples follow these conventions. When you generate a new widget from a pattern doc, follow the same — it's a 3-line addition:
+The script seeks the timeline manually frame-by-frame. The widget must expose:
 
 ```js
 const tl = createTimeline({ /* ... */ });
-window.timeline = tl;                                                // ← convention
+window.timeline = tl;                                                // ← required
 const clean = new URLSearchParams(location.search).get("clean") === "1";
-if (clean) document.querySelectorAll(".controls").forEach(el => el.style.display = "none");
+if (clean) document.querySelectorAll(".controls, .sm-controls").forEach(el => el.style.display = "none");
 ```
 
-Output reference:
-- 1080p 60fps 10s ≈ 8-15 MB
-- 4K 60fps 10s ≈ 25-40 MB
-- 9:16 1080×1920 60fps 6s ≈ 6-10 MB
+All bundled examples and pattern-doc skeletons follow this — the agent must keep doing it when generating new widgets.
 
-CLI flags (run `--help` for the full list):
+### Output reference
+
+| Spec | Approx size |
+|---|---|
+| 1080p 60fps × 10s | 8–15 MB |
+| 4K   60fps × 10s | 25–40 MB |
+| 9:16 1080×1920 60fps × 6s | 6–10 MB |
+
+### CLI flags
+
+Run `python3 scripts/render.py --help` for the full list. Most common:
 
 | Flag | Default | Notes |
 |---|---|---|
-| `--widget` | required | Path to the HTML file |
-| `--resolution` | `1920x1080` | `1080x1920` for shorts, `1080x1080` for square |
-| `--fps` | `60` | `30` for smaller files, `60` for smoothness |
-| `--duration` | `6` | Seconds to capture |
-| `--out` | `video.mp4` | Output path |
-| `--device-scale` | `2` | DPR for crisp text |
-| `--narration` | — | Optional audio overlay (full volume) |
-| `--music` | — | Optional background (mixed at 15% under narration) |
-| `--crf` | `18` | x264 quality (lower = better, larger) |
-| `--preset` | `slow` | x264 preset |
+| `--widget` | required | Path to the HTML |
+| `--out` | — | Set to write MP4; omit for preview URL |
+| `--resolution` | `1920x1080` | `1080x1920` shorts · `1080x1080` square |
+| `--fps` | `60` | `30` for smaller files |
+| `--duration` | `6` | Seconds (video mode only) |
+| `--narration` | — | Audio overlay (full volume) |
+| `--music` | — | Background music (mixed at 15%) |
+| `--timeout` | — | Preview mode auto-shutdown after N seconds |
+| `--no-open` | — | Preview mode — skip auto-opening browser |
 
 ## Strategy 1 — Manual screen recording (fastest, no setup)
 

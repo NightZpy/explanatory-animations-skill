@@ -115,6 +115,51 @@ Combine with the shared style libraries (`library/colors.md`, `typography.md`, `
 
 The `examples/` folder is **optional reference material** for humans who want to preview "what does Pattern N feel like." Pattern docs are self-contained — building a new animation does not require opening an example file.
 
+## Delivery — fully autonomous (THE AGENT, NOT THE USER, RUNS THIS)
+
+When the user wants the animation delivered as a URL to preview or as an MP4 file, **the agent invokes `scripts/render.py` directly via Bash** — the user does not install or configure anything. On first run the script bootstraps a private venv under `~/.cache/explanatory-animations/venv` with Playwright + Chromium + a bundled ffmpeg (`imageio-ffmpeg`). Subsequent runs reuse the cache (cold start < 200ms).
+
+```bash
+# 1. Agent writes the widget HTML to a temp path it controls:
+WIDGET="$(mktemp -d)/widget.html"
+cat > "$WIDGET" <<'EOF'
+   <!-- the agent generates the widget from patterns/X-name.md skeleton + style libs -->
+EOF
+
+# 2a. Preview URL — agent prints the URL for the user to open
+python3 ${CLAUDE_SKILL_DIR}/scripts/render.py --widget "$WIDGET"
+#   → emits a JSON line: {"mode":"preview","url":"http://localhost:54321/widget.html",...}
+#   → opens a browser tab automatically
+#   → server runs until Ctrl+C OR --timeout seconds
+
+# 2b. MP4 file — agent prints the resulting file path for the user
+python3 ${CLAUDE_SKILL_DIR}/scripts/render.py \
+    --widget "$WIDGET" \
+    --out "$(dirname "$WIDGET")/reel.mp4" \
+    --resolution 1080x1920 \
+    --fps 60 \
+    --duration 6
+#   → emits a JSON line: {"mode":"video","out":"...reel.mp4","size_kb":8345,...}
+```
+
+**Bootstrap details (agent does not narrate these to the user — they happen silently):**
+
+| First-time install | Subsequent runs |
+|---|---|
+| Creates `~/.cache/explanatory-animations/venv` | Reuses existing venv |
+| `pip install playwright imageio-ffmpeg` (~50 MB) | No-op (stamp file check) |
+| `playwright install chromium` (~140 MB) | No-op |
+| Writes stamp file (deps version) | Skips when stamp matches |
+
+The agent's responsibility is just to:
+
+1. Confirm the discovery protocol (topic / pattern / style / complexity / export).
+2. Write the widget HTML to a temp path.
+3. Invoke `scripts/render.py` with `--out path.mp4` (deliver MP4) or no `--out` (deliver preview URL).
+4. Hand the JSON-line output to the user as either "Open this URL: …" or "Your MP4 is at: …".
+
+Never tell the user to install Playwright / ffmpeg / Node / npm — the script handles all of that automatically. If the bootstrap fails (e.g. offline / network blocked / disk full) the script prints a clear error and the agent surfaces it to the user.
+
 ## Output checklist (self-grade before declaring done)
 
 - [ ] Discovery protocol completed (topic, pattern, style, complexity, interactivity confirmed)
