@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Pattern M — Text scramble (Anime.js v4)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --paper: #0f0f17; --ink: #f4f4f5; --accent: #22d3ee; --accent-2: #e879f9; }
+  body { font-family: 'Geist', system-ui, sans-serif; background: var(--paper); color: var(--ink); margin: 0; min-height: 100dvh; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px 20px; }
+  h1 { font-family: 'Geist Mono', monospace; font-size: 64px; font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; text-align: center; max-width: 900px; margin: 0 0 32px; font-kerning: none; font-variant-ligatures: none; text-rendering: optimizeSpeed; }
+  h1 .char { display: inline-block; will-change: color, transform; }
+  .controls { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+  .btn { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15); color: var(--ink); font-family: 'Geist Mono', monospace; font-size: 12px; padding: 8px 14px; border-radius: 8px; cursor: pointer; transition: all 120ms; }
+  .btn:hover { background: rgba(255,255,255,.1); border-color: var(--accent); }
+  .btn.active { background: var(--accent); color: #000; border-color: var(--accent); font-weight: 600; }
+  .lead { font-family: 'Geist Mono', monospace; font-size: 11px; color: rgba(244,244,245,.5); text-transform: uppercase; letter-spacing: .12em; margin-bottom: 16px; }
+  @media (prefers-reduced-motion: reduce) { .char { transition: none !important; } }
+</style>
+</head>
+<body>
+  <p class="lead">Pattern M — Text effects</p>
+  <h1 id="headline">Make better stuff.</h1>
+  <div class="controls">
+    <button class="btn active" data-effect="scramble">Scramble</button>
+    <button class="btn" data-effect="cascade">Cascade in</button>
+    <button class="btn" data-effect="wave">Wave</button>
+    <button class="btn" data-effect="magnet">Magnet (hover chars)</button>
+    <button class="btn" data-effect="reset">Reset</button>
+  </div>
+
+  <script type="module">
+    import { animate, createTimeline, stagger, text, utils } from "https://esm.sh/animejs@4.1.4";
+
+    let split = null;
+    const headline = document.getElementById("headline");
+    const original = headline.textContent;
+    const GLYPHS = "█▓▒░@#$%&*+=<>?!~/\\|{}[]()01_-^X".split("");
+    const ACCENT = "#22d3ee";
+
+    function reset() {
+      if (split) split.revert();
+      headline.textContent = original;
+      split = null;
+    }
+
+    function ensureSplit() {
+      if (split) return split;
+      split = text.split(headline, { chars: true, accessible: true });
+      return split;
+    }
+
+    function scramble() {
+      reset();
+      const s = ensureSplit();
+      s.chars.forEach(el => el.dataset.final = el.textContent);
+      // Phase 1: each char cycles through random glyphs
+      const tl = createTimeline({ defaults: { ease: "steps(20)" } });
+      s.chars.forEach((el, i) => {
+        const seq = [];
+        for (let k = 0; k < 14; k++) seq.push(utils.randomPick(GLYPHS));
+        seq.push(el.dataset.final);
+        tl.add(el, {
+          innerHTML: seq,
+          color: ["#eab308", ACCENT, "#ffffff"],
+          duration: 700,
+          delay: 0,
+        }, i * 30);
+      });
+    }
+
+    function cascade() {
+      reset();
+      const s = text.split(headline, { words: true, wrap: "clip", accessible: true });
+      split = s;
+      animate(s.words, {
+        y: ["110%", "0%"],
+        duration: 800,
+        delay: stagger(60),
+        ease: "out(3)",
+      });
+    }
+
+    function wave() {
+      reset();
+      const s = ensureSplit();
+      s.chars.forEach((el, i) => {
+        animate(el, {
+          y: ["0px", "-14px", "0px"],
+          duration: 1400,
+          delay: i * 70,
+          loop: true,
+          ease: "inOutSine",
+        });
+      });
+    }
+
+    function magnet() {
+      reset();
+      const s = ensureSplit();
+      s.chars.forEach(el => {
+        el.addEventListener("pointerenter", () => {
+          animate(el, {
+            x: utils.random(-40, 40),
+            y: utils.random(-40, 40),
+            color: ACCENT,
+            duration: 600,
+            ease: "out(3)",
+          });
+        });
+      });
+      // Click anywhere to tidy back
+      document.addEventListener("click", () => {
+        animate(s.chars, { x: 0, y: 0, color: "#f4f4f5", duration: 700, ease: "inOutExpo" });
+      }, { once: true });
+    }
+
+    const effects = { scramble, cascade, wave, magnet, reset };
+
+    document.querySelectorAll(".btn").forEach(b => b.addEventListener("click", () => {
+      document.querySelectorAll(".btn").forEach(x => x.classList.toggle("active", x === b));
+      effects[b.dataset.effect]();
+    }));
+
+    document.fonts.ready.then(() => setTimeout(scramble, 300));
+  </script>
+</body>
+</html>

@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Pattern P — Sound wave visualizer (Anime.js v4)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; min-height: 100dvh; background: #050505; color: #f4f4f5; font-family: 'Geist', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; overflow: hidden; }
+  .lead { font-family: 'Geist Mono', monospace; font-size: 11px; color: rgba(244,244,245,.5); text-transform: uppercase; letter-spacing: .12em; position: fixed; top: 24px; z-index: 2; }
+  .stage { position: relative; width: 800px; height: 800px; max-width: 100vmin; max-height: 100vmin; }
+  .stage > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .stage > svg.lines { mix-blend-mode: screen; }
+  .stage > svg.circles { mix-blend-mode: screen; }
+</style>
+</head>
+<body>
+  <p class="lead">Pattern P — SVG line drawing (radio waves)</p>
+  <div class="stage" id="stage"></div>
+
+  <script type="module">
+    import { svg, createTimeline, stagger, utils } from "https://esm.sh/animejs@4.1.4";
+
+    const stage = document.getElementById("stage");
+    const W = 1100, H = 1100;
+
+    // Generate vertical lines
+    function generateLines(n) {
+      const margin = 50;
+      const spacing = (W - margin * 2) / (n - 1);
+      let html = `<svg class="lines" viewBox="0 0 ${W} ${H}"><g fill="none">`;
+      for (let i = 0; i < n; i++) {
+        const x = margin + i * spacing;
+        html += `<line x1="${x}" y1="${margin}" x2="${x}" y2="${H - margin}" class="line-v" stroke="#A4FF4F" stroke-linecap="butt" stroke-linejoin="round" stroke-width="6"/>`;
+      }
+      html += `</g></svg>`;
+      return html;
+    }
+
+    // Generate concentric circles
+    function generateCircles(n) {
+      const cx = W / 2, cy = H / 2, maxR = 500;
+      const step = maxR / n;
+      let html = `<svg class="circles" viewBox="0 0 ${W} ${H}"><g fill="none">`;
+      for (let i = 0; i < n; i++) {
+        const r = (i + 1) * step;
+        html += `<circle class="circle-r" cx="${cx}" cy="${cy}" r="${r}" stroke="#A4FF4F" stroke-width="6" stroke-linecap="butt"/>`;
+      }
+      html += `</g></svg>`;
+      return html;
+    }
+
+    stage.insertAdjacentHTML("beforeend", generateLines(80));
+    stage.insertAdjacentHTML("beforeend", generateCircles(40));
+
+    createTimeline({
+      playbackEase: "out(4)",
+      loop: 0,
+      defaults: { ease: "inOut(4)", duration: 10000, loop: true },
+    })
+      .add(svg.createDrawable(".line-v"), {
+        draw: [
+          ".5 .5",
+          () => { const l = utils.random(.05, .45, 2); return `${.5 - l} ${.5 + l}`; },
+          "0.5 0.5",
+        ],
+        stroke: "#FF4B4B",
+      }, stagger([0, 8000], { start: 0, from: "first" }))
+      .add(svg.createDrawable(".circle-r"), {
+        draw: [
+          () => { const v = utils.random(-1, -.5, 2); return `${v} ${v}`; },
+          () => `${utils.random(0, .25, 2)} ${utils.random(.5, .75, 2)}`,
+          () => { const v = utils.random(1, 1.5, 2); return `${v} ${v}`; },
+        ],
+        stroke: "#FF4B4B",
+      }, stagger([0, 8000], { start: 0 }))
+      .init();
+  </script>
+</body>
+</html>

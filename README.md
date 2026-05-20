@@ -10,10 +10,10 @@ The skill asks the user **before** generating code: topic, pattern, palette, typ
 
 ```
 explanatory-animations/
-├── SKILL.md                       # entry point — discovery protocol + index
+├── SKILL.md                       # entry point — discovery protocol + pattern index
 ├── README.md                      # this file
 ├── LICENSE                        # MIT
-├── patterns/                      # 12 deep-dive pattern docs + index + mistakes
+├── patterns/                      # 16 deep-dive pattern docs + index + mistakes
 │   ├── _index.md
 │   ├── _mistakes.md
 │   ├── A-lifecycle.md             # state machines with branches
@@ -27,18 +27,28 @@ explanatory-animations/
 │   ├── I-layered-transform.md     # LLM, neural net, compiler stages
 │   ├── J-geographic-map.md        # regional flows, supply chain
 │   ├── K-cross-section.md         # OSI, memory hierarchy, strata
-│   └── L-timeline.md              # SSL handshake, OAuth, signal timing
+│   ├── L-timeline.md              # SSL handshake, OAuth, signal timing
+│   ├── M-text-effects.md          # scramble / split / type-on / magnet / wave
+│   ├── N-counter.md               # big-number reveals, flip-clock, KPI cards
+│   ├── O-shape-morph.md           # drift, polygon morph, generative bg loops
+│   └── P-svg-line-drawing.md      # sound waves, sonar, route reveals, signatures
 ├── library/                       # shared style references
 │   ├── colors.md                  # 4 palette presets + semantic tones + path colors
 │   ├── typography.md              # 3 typography pairings + role mapping
 │   ├── icons.md                   # emoji vs Lucide vs custom SVG vs user assets
 │   ├── controls.md                # Play/Pause/Restart/Speed/Path/Status strip
 │   ├── timing.md                  # duration + easing reference
-│   └── export.md                  # 3 video export pipelines (manual / CCapture / Puppeteer)
+│   ├── export.md                  # 3 video export pipelines (manual / CCapture / Puppeteer)
+│   └── content-creator-uses.md    # priorities for reel/shorts/podcast — different from didactic
 ├── engine/
-│   └── anime-cheatsheet.md        # Anime.js v3 APIs actually used
+│   └── anime-cheatsheet.md        # Anime.js v4 APIs + v3 → v4 migration table
 └── examples/
-    └── lifecycle.html             # standalone Pattern A reference implementation
+    ├── lifecycle.html             # Pattern A reference (v4)
+    ├── system-flow.html           # Pattern B reference (v4)
+    ├── text-scramble.html         # Pattern M reference (v4)
+    ├── counter-stars.html         # Pattern N reference (v4)
+    ├── shape-drift.html           # Pattern O reference (v4)
+    └── sound-wave.html            # Pattern P reference (v4)
 ```
 
 ## How Claude uses it
@@ -85,6 +95,8 @@ When you (or Claude itself) detect a request like:
 
 ## Patterns at a glance
 
+**Family 1 — Didactic (teach a concept)**
+
 | Code | Best for |
 |---|---|
 | **A** Lifecycle | Job lifecycle, order status, ticket state |
@@ -99,6 +111,15 @@ When you (or Claude itself) detect a request like:
 | **J** Geographic | Regional request flow, supply chain, migration |
 | **K** Cross-section | OSI 7 layers, memory hierarchy, strata |
 | **L** Timeline | TLS handshake, OAuth, signal timing |
+
+**Family 2 — Content creator (capture attention)**
+
+| Code | Best for |
+|---|---|
+| **M** Text effects | Reel intros, scramble headlines, magnet on hover, CTA reveal |
+| **N** Counter / clock | 10K / $1M / 50K star reveal, flip-digit clock, KPI dashboard |
+| **O** Shape morph | Generative background loops, podcast intro motion, ambient bg |
+| **P** SVG line drawing | Sound waves, sonar pings, logo reveal, route trace |
 
 ## Style consistency
 
@@ -127,10 +148,13 @@ MIT. See [`LICENSE`](./LICENSE).
 
 ## Roadmap
 
-- [ ] More reference implementations under `examples/` for patterns C–L
-- [ ] `scripts/generate-widget.py` — generate a complete widget HTML from a YAML config (Pattern + content data)
-- [ ] Video export script with sensible defaults (1080p / 60fps / mp4)
+- [ ] Reference implementations for patterns C–L
+- [ ] `scripts/generate-widget.py` — generate a complete widget HTML from a YAML config (pattern + content data)
+- [ ] Video export script with sensible defaults (1080p / 60fps / mp4, `?clean=1` headless mode)
 - [ ] Storybook-style demo page indexing all reference implementations
+- [ ] Brand-aligned palette generator (input: brand hex → output: full token set)
+- [ ] Pattern Q — Network graph (force-directed, for explaining graph algorithms / social networks)
+- [ ] Pattern R — 3D / isometric (CSS 3D transforms for explanations that need depth)
 
 ## Contribute
 

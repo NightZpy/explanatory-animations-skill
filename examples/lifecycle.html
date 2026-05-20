@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<title>Pattern A — Lifecycle state machine</title>
+<title>Pattern A — Lifecycle (Anime.js v4)</title>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,252 +12,206 @@
   h1 { font-weight: 700; font-size: 28px; letter-spacing: -0.02em; margin-bottom: 8px; }
   p.lede { color: #52525b; max-width: 720px; line-height: 1.6; margin-bottom: 24px; }
   code { font-family: 'Geist Mono', monospace; background: #f4f4f5; padding: 1px 6px; border-radius: 4px; font-size: 0.9em; }
+
+  /* widget */
+  .sm { background: #fdfdfb; border: 1px solid #e7e5e4; border-radius: 14px; padding: 18px; max-width: 900px; margin: 18px 0; }
+  .sm-controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 14px; }
+  .sm-paths { display: flex; flex-wrap: wrap; gap: 6px; }
+  .sm-btn { background: #fff; border: 1px solid #d4d4d8; color: #3f3f46; font-family: 'Geist Mono', monospace; font-size: 12px; padding: 5px 11px; border-radius: 999px; cursor: pointer; transition: all 120ms; }
+  .sm-btn:hover { background: #fafaf7; }
+  .sm-btn.active { background: #fef3c7; border-color: #eab308; color: #713f12; }
+  .sm-divider { width: 1px; height: 18px; background: #e7e5e4; margin: 0 4px; }
+  .sm-icon-btn { width: 30px; height: 30px; border-radius: 8px; border: 1px solid #d4d4d8; background: #fff; color: #3f3f46; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; justify-content: center; padding: 0; line-height: 1; transition: all 120ms; }
+  .sm-icon-btn:hover { background: #fafaf7; }
+  .sm-icon-btn:disabled { opacity: .45; cursor: not-allowed; }
+  .sm-speed { display: inline-flex; align-items: center; gap: 6px; font-family: 'Geist Mono', monospace; font-size: 11px; color: #71717a; }
+  .sm-speed-pill { display: inline-flex; background: #fff; border: 1px solid #d4d4d8; border-radius: 8px; padding: 2px; }
+  .sm-speed-pill button { font-family: 'Geist Mono', monospace; font-size: 11px; padding: 3px 8px; border: 0; background: transparent; color: #52525b; cursor: pointer; border-radius: 5px; line-height: 1; }
+  .sm-speed-pill button.active { background: #eab308; color: #fff; font-weight: 600; }
+  .sm svg { width: 100%; height: auto; max-height: 280px; display: block; }
+  .sm-status { font-family: 'Geist Mono', monospace; font-size: 11px; color: #a1a1aa; margin-top: 8px; text-align: right; min-height: 14px; }
+  .sm-status.playing { color: #16a34a; }
+  .sm-status.paused  { color: #d97706; }
+  @media (prefers-reduced-motion: reduce) { .sm * { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
 </style>
 </head>
 <body>
   <h1>Job lifecycle</h1>
-  <p class="lede">A job is enqueued, picked up by a worker, then either completes successfully or fails. Use the path pills to switch between the happy path and the failure path.</p>
+  <p class="lede">Anime.js v4 reference implementation of <strong>Pattern A — Lifecycle / state machine</strong>. A job is enqueued, picked up by a worker, then either completes successfully, fails, or retries. Use the path pills to switch between happy / failure / retry paths.</p>
 
-  <!-- The widget itself — one div is all the host page needs. -->
-  <div class="state-machine" data-subsystem="job"></div>
+  <div class="sm" id="widget"></div>
 
-  <!-- Engine + helpers -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js" defer></script>
-  <script defer>
-    // Inline minimal version of _shared/anime-helpers.js for this example.
-    // In a real project, factor this out and load from a shared file.
-    (function () {
-      const LIFECYCLES = {
-        job: {
-          title: "Job lifecycle",
-          viewBox: "0 0 720 240",
-          nodes: [
-            { id: "queued",    label: "queued",    tone: "pending", x: 80,  y: 100 },
-            { id: "active",    label: "active",    tone: "warn",    x: 260, y: 100 },
-            { id: "completed", label: "completed", tone: "ok",      x: 460, y: 50  },
-            { id: "failed",    label: "failed",    tone: "bad",     x: 460, y: 150 },
-            { id: "retried",   label: "retry +1",  tone: "warn",    x: 620, y: 150 },
-          ],
-          edges: [
-            ["queued", "active"],
-            ["active", "completed"],
-            ["active", "failed"],
-            ["failed", "retried"],
-            ["retried", "active"],
-          ],
-          paths: {
-            happy:   ["queued", "active", "completed"],
-            failure: ["queued", "active", "failed"],
-            retry:   ["queued", "active", "failed", "retried", "active", "completed"],
+  <script type="module">
+    import { animate, createTimeline, stagger, utils } from "https://esm.sh/animejs@4.1.4";
+
+    const cfg = {
+      title: "Job lifecycle",
+      viewBox: "0 0 720 240",
+      nodes: [
+        { id: "queued",    label: "queued",    tone: "pending", x: 80,  y: 100 },
+        { id: "active",    label: "active",    tone: "warn",    x: 260, y: 100 },
+        { id: "completed", label: "completed", tone: "ok",      x: 460, y: 50  },
+        { id: "failed",    label: "failed",    tone: "bad",     x: 460, y: 150 },
+        { id: "retried",   label: "retry +1",  tone: "warn",    x: 620, y: 150 },
+      ],
+      edges: [
+        ["queued", "active"],
+        ["active", "completed"],
+        ["active", "failed"],
+        ["failed", "retried"],
+        ["retried", "active"],
+      ],
+      paths: {
+        happy:   ["queued", "active", "completed"],
+        failure: ["queued", "active", "failed"],
+        retry:   ["queued", "active", "failed", "retried", "active", "completed"],
+      },
+      labels: { happy: "Happy path", failure: "Failure", retry: "Retry → success" },
+    };
+
+    const toneColor = (t) => ({ ok: "#16a34a", warn: "#d97706", bad: "#dc2626" }[t] || "#a1a1aa");
+
+    const widget = document.getElementById("widget");
+
+    // Build controls
+    widget.innerHTML = `
+      <div class="sm-controls">
+        <div class="sm-paths">${Object.keys(cfg.paths).map(k => `<button class="sm-btn" data-path="${k}">${cfg.labels[k] || k}</button>`).join("")}</div>
+        <span class="sm-divider"></span>
+        <button class="sm-icon-btn" data-act="play" title="Play">▶</button>
+        <button class="sm-icon-btn" data-act="pause" title="Pause" disabled>⏸</button>
+        <button class="sm-icon-btn" data-act="restart" title="Restart">↻</button>
+        <span class="sm-divider"></span>
+        <span class="sm-speed">speed
+          <span class="sm-speed-pill">
+            <button data-speed="0.5">0.5×</button>
+            <button data-speed="1" class="active">1×</button>
+            <button data-speed="2">2×</button>
+          </span>
+        </span>
+        <span class="sm-status" id="status" style="margin-left:auto">ready</span>
+      </div>
+    `;
+
+    // Build SVG
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("viewBox", cfg.viewBox);
+    svg.innerHTML = `<defs><marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#71717a"/></marker></defs>`;
+
+    cfg.edges.forEach(([from, to]) => {
+      const a = cfg.nodes.find(n => n.id === from);
+      const b = cfg.nodes.find(n => n.id === to);
+      const dx = b.x - a.x, dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len, uy = dy / len;
+      const line = document.createElementNS(svgNS, "line");
+      line.setAttribute("x1", a.x + ux * 52); line.setAttribute("y1", a.y + uy * 52);
+      line.setAttribute("x2", b.x - ux * 52); line.setAttribute("y2", b.y - uy * 52);
+      line.setAttribute("stroke", "#d4d4d8");
+      line.setAttribute("stroke-width", "1.5");
+      line.setAttribute("marker-end", "url(#arrow)");
+      line.dataset.edge = `${from}-${to}`;
+      svg.appendChild(line);
+    });
+    cfg.nodes.forEach(n => {
+      const g = document.createElementNS(svgNS, "g");
+      g.dataset.node = n.id;
+      const rect = document.createElementNS(svgNS, "rect");
+      rect.setAttribute("x", n.x - 52); rect.setAttribute("y", n.y - 18);
+      rect.setAttribute("width", 104); rect.setAttribute("height", 36); rect.setAttribute("rx", 8);
+      rect.setAttribute("fill", "#fff"); rect.setAttribute("stroke", "#d4d4d8"); rect.setAttribute("stroke-width", "1.5");
+      g.appendChild(rect);
+      const txt = document.createElementNS(svgNS, "text");
+      txt.setAttribute("x", n.x); txt.setAttribute("y", n.y + 4);
+      txt.setAttribute("text-anchor", "middle"); txt.setAttribute("font-family", "Geist Mono, monospace");
+      txt.setAttribute("font-size", "12.5"); txt.setAttribute("fill", "#09090b");
+      txt.textContent = n.label;
+      g.appendChild(txt);
+      svg.appendChild(g);
+    });
+    const dot = document.createElementNS(svgNS, "circle");
+    dot.setAttribute("r", 7); dot.setAttribute("fill", "#eab308");
+    dot.setAttribute("stroke", "#713f12"); dot.setAttribute("stroke-width", "1.5");
+    dot.setAttribute("opacity", 0);
+    svg.appendChild(dot);
+    widget.appendChild(svg);
+
+    // State
+    let timeline = null;
+    let currentPath = Object.keys(cfg.paths)[0];
+    let currentSpeed = 1;
+    const status = widget.querySelector("#status");
+    const playBtn    = widget.querySelector('[data-act="play"]');
+    const pauseBtn   = widget.querySelector('[data-act="pause"]');
+    const restartBtn = widget.querySelector('[data-act="restart"]');
+
+    const setStatus = (text, kind) => { status.textContent = text; status.classList.remove("playing", "paused"); if (kind) status.classList.add(kind); };
+    const setActivePath = (k) => widget.querySelectorAll(".sm-btn").forEach(b => b.classList.toggle("active", b.dataset.path === k));
+
+    function play(pathKey) {
+      currentPath = pathKey || currentPath;
+      setActivePath(currentPath);
+
+      svg.querySelectorAll("rect").forEach(r => { r.setAttribute("fill", "#fff"); r.setAttribute("stroke", "#d4d4d8"); });
+      svg.querySelectorAll("line").forEach(l => l.setAttribute("stroke", "#d4d4d8"));
+      const seq = cfg.paths[currentPath];
+      const first = cfg.nodes.find(n => n.id === seq[0]);
+      dot.setAttribute("cx", first.x); dot.setAttribute("cy", first.y); dot.setAttribute("opacity", 1);
+      const firstRect = svg.querySelector(`[data-node="${seq[0]}"] rect`);
+      firstRect.setAttribute("fill", toneColor(first.tone) + "1f");
+      firstRect.setAttribute("stroke", toneColor(first.tone));
+
+      animate.engine.speed = currentSpeed;
+
+      const tl = createTimeline({
+        defaults: { ease: "inOutSine" },
+        onBegin:    () => { setStatus("playing…", "playing"); playBtn.disabled = true; pauseBtn.disabled = false; },
+        onComplete: () => { setStatus("done"); playBtn.disabled = false; pauseBtn.disabled = true; },
+      });
+      timeline = tl;
+
+      for (let i = 1; i < seq.length; i++) {
+        const prev = cfg.nodes.find(n => n.id === seq[i - 1]);
+        const next = cfg.nodes.find(n => n.id === seq[i]);
+        const edge = svg.querySelector(`[data-edge="${prev.id}-${next.id}"]`);
+        tl.add(dot, {
+          cx: next.x, cy: next.y,
+          duration: 700, delay: 200,
+          onUpdate: self => { if (edge && self.progress > 0.1) edge.setAttribute("stroke", toneColor(next.tone)); },
+          onComplete: () => {
+            const r = svg.querySelector(`[data-node="${next.id}"] rect`);
+            r.setAttribute("fill", toneColor(next.tone) + "1f");
+            r.setAttribute("stroke", toneColor(next.tone));
+            animate(r, { scale: [1, 1.06, 1], duration: 320, ease: "outQuad", transformOrigin: `${next.x}px ${next.y}px` });
           },
-          labels: { happy: "Happy path", failure: "Failure", retry: "Retry then success" },
-        },
-      };
-
-      function toneColor(t) {
-        if (t === "ok") return "#16a34a";
-        if (t === "warn") return "#d97706";
-        if (t === "bad") return "#dc2626";
-        return "#a1a1aa";
-      }
-
-      function injectStyles() {
-        if (document.getElementById("anime-helpers-style")) return;
-        const css = `
-.state-machine{background:#fdfdfb;border:1px solid #e7e5e4;border-radius:14px;padding:18px;max-width:900px;margin:18px 0}
-.state-machine .sm-controls{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px;align-items:center}
-.state-machine .sm-paths{display:flex;flex-wrap:wrap;gap:6px}
-.state-machine .sm-btn{background:#fff;border:1px solid #d4d4d8;color:#3f3f46;font-family:'Geist Mono',monospace;font-size:12px;padding:5px 11px;border-radius:999px;cursor:pointer;transition:all 120ms}
-.state-machine .sm-btn:hover{background:#fafaf7}
-.state-machine .sm-btn.active{background:#fef3c7;border-color:#eab308;color:#713f12}
-.state-machine .sm-divider{width:1px;height:18px;background:#e7e5e4;margin:0 4px}
-.state-machine .sm-icon-btn{width:30px;height:30px;border-radius:8px;border:1px solid #d4d4d8;background:#fff;color:#3f3f46;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:12px;transition:all 120ms;font-family:inherit;line-height:1;padding:0}
-.state-machine .sm-icon-btn:hover{background:#fafaf7}
-.state-machine .sm-icon-btn:disabled{opacity:.45;cursor:not-allowed}
-.state-machine .sm-speed{display:inline-flex;align-items:center;gap:6px;font-family:'Geist Mono',monospace;font-size:11px;color:#71717a}
-.state-machine .sm-speed-pill{display:inline-flex;background:#fff;border:1px solid #d4d4d8;border-radius:8px;padding:2px}
-.state-machine .sm-speed-pill button{font-family:'Geist Mono',monospace;font-size:11px;padding:3px 8px;border:0;background:transparent;color:#52525b;cursor:pointer;border-radius:5px;line-height:1}
-.state-machine .sm-speed-pill button.active{background:#eab308;color:#fff;font-weight:600}
-.state-machine svg{width:100%;height:auto;max-height:280px;display:block}
-.state-machine .sm-status{font-family:'Geist Mono',monospace;font-size:11px;color:#a1a1aa;margin-top:8px;text-align:right;min-height:14px}
-.state-machine .sm-status.playing{color:#16a34a}
-.state-machine .sm-status.paused{color:#d97706}
-@media (prefers-reduced-motion: reduce){.state-machine *{animation-duration:.01ms !important;transition-duration:.01ms !important}}`;
-        const s = document.createElement("style");
-        s.id = "anime-helpers-style";
-        s.textContent = css;
-        document.head.appendChild(s);
-      }
-
-      function renderStateMachine(container) {
-        if (container.dataset.rendered) return;
-        container.dataset.rendered = "true";
-        const cfg = LIFECYCLES[container.dataset.subsystem || "job"];
-        if (!cfg) return;
-
-        // Controls
-        const ctrl = document.createElement("div");
-        ctrl.className = "sm-controls";
-        const paths = document.createElement("div");
-        paths.className = "sm-paths";
-        Object.keys(cfg.paths).forEach(k => {
-          const b = document.createElement("button");
-          b.className = "sm-btn"; b.dataset.path = k;
-          b.textContent = cfg.labels?.[k] || k;
-          paths.appendChild(b);
         });
-        ctrl.appendChild(paths);
-
-        const divider1 = document.createElement("span"); divider1.className = "sm-divider"; ctrl.appendChild(divider1);
-        const play = btnIcon("▶", "Play"); const pause = btnIcon("⏸", "Pause"); const restart = btnIcon("↻", "Restart");
-        pause.disabled = true;
-        ctrl.appendChild(play); ctrl.appendChild(pause); ctrl.appendChild(restart);
-
-        const divider2 = document.createElement("span"); divider2.className = "sm-divider"; ctrl.appendChild(divider2);
-        const speedLabel = document.createElement("span"); speedLabel.className = "sm-speed"; speedLabel.innerHTML = "<span>speed</span>";
-        const speedPill = document.createElement("div"); speedPill.className = "sm-speed-pill";
-        [0.5, 1, 2].forEach(v => {
-          const b = document.createElement("button");
-          b.textContent = `${v}×`; b.dataset.speed = v;
-          if (v === 1) b.classList.add("active");
-          speedPill.appendChild(b);
-        });
-        speedLabel.appendChild(speedPill);
-        ctrl.appendChild(speedLabel);
-
-        container.appendChild(ctrl);
-
-        // SVG
-        const svgNS = "http://www.w3.org/2000/svg";
-        const svg = document.createElementNS(svgNS, "svg");
-        svg.setAttribute("viewBox", cfg.viewBox);
-        svg.innerHTML = `<defs><marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#71717a"/></marker></defs>`;
-
-        cfg.edges.forEach(([from, to]) => {
-          const a = cfg.nodes.find(n => n.id === from);
-          const b = cfg.nodes.find(n => n.id === to);
-          const dx = b.x - a.x, dy = b.y - a.y;
-          const len = Math.hypot(dx, dy) || 1;
-          const ux = dx/len, uy = dy/len;
-          const line = document.createElementNS(svgNS, "line");
-          line.setAttribute("x1", a.x + ux*52); line.setAttribute("y1", a.y + uy*52);
-          line.setAttribute("x2", b.x - ux*52); line.setAttribute("y2", b.y - uy*52);
-          line.setAttribute("stroke", "#d4d4d8"); line.setAttribute("stroke-width", "1.5");
-          line.setAttribute("marker-end", "url(#arrow)");
-          line.dataset.edge = `${from}-${to}`;
-          svg.appendChild(line);
-        });
-        cfg.nodes.forEach(n => {
-          const g = document.createElementNS(svgNS, "g"); g.dataset.node = n.id;
-          const rect = document.createElementNS(svgNS, "rect");
-          rect.setAttribute("x", n.x - 52); rect.setAttribute("y", n.y - 18);
-          rect.setAttribute("width", 104); rect.setAttribute("height", 36); rect.setAttribute("rx", 8);
-          rect.setAttribute("fill", "#ffffff"); rect.setAttribute("stroke", "#d4d4d8"); rect.setAttribute("stroke-width", "1.5");
-          g.appendChild(rect);
-          const text = document.createElementNS(svgNS, "text");
-          text.setAttribute("x", n.x); text.setAttribute("y", n.y + 4);
-          text.setAttribute("text-anchor", "middle"); text.setAttribute("font-family", "Geist Mono, monospace");
-          text.setAttribute("font-size", "12.5"); text.setAttribute("fill", "#09090b");
-          text.textContent = n.label;
-          g.appendChild(text);
-          svg.appendChild(g);
-        });
-        const dot = document.createElementNS(svgNS, "circle");
-        dot.setAttribute("r", 7); dot.setAttribute("fill", "#eab308");
-        dot.setAttribute("stroke", "#713f12"); dot.setAttribute("stroke-width", "1.5");
-        dot.setAttribute("opacity", 0);
-        svg.appendChild(dot);
-        container.appendChild(svg);
-
-        const status = document.createElement("div");
-        status.className = "sm-status"; status.textContent = "ready";
-        container.appendChild(status);
-
-        // State
-        let timeline = null, currentPath = Object.keys(cfg.paths)[0], speed = 1;
-        function setStatus(text, kind) { status.textContent = text; status.classList.remove("playing","paused"); if (kind) status.classList.add(kind); }
-        function setActivePath(k) { container.querySelectorAll(".sm-btn").forEach(b => b.classList.toggle("active", b.dataset.path === k)); }
-
-        function play(pathKey) {
-          currentPath = pathKey || currentPath;
-          setActivePath(currentPath);
-          // Reset
-          svg.querySelectorAll("rect").forEach(r => { r.setAttribute("fill", "#fff"); r.setAttribute("stroke", "#d4d4d8"); });
-          svg.querySelectorAll("line").forEach(l => l.setAttribute("stroke", "#d4d4d8"));
-          const seq = cfg.paths[currentPath];
-          const first = cfg.nodes.find(n => n.id === seq[0]);
-          dot.setAttribute("cx", first.x); dot.setAttribute("cy", first.y); dot.setAttribute("opacity", 1);
-          const firstRect = svg.querySelector(`[data-node="${seq[0]}"] rect`);
-          firstRect.setAttribute("fill", toneColor(first.tone)+"1f"); firstRect.setAttribute("stroke", toneColor(first.tone));
-
-          if (!window.anime) { setStatus("anime.js not loaded"); return; }
-          window.anime.speed = speed;
-          const tl = window.anime.timeline({
-            easing: "easeInOutSine",
-            begin: () => { setStatus("playing…","playing"); play_btn(true); },
-            complete: () => { setStatus("done"); play_btn(false); },
-          });
-          timeline = tl;
-          for (let i = 1; i < seq.length; i++) {
-            const prev = cfg.nodes.find(n => n.id === seq[i-1]);
-            const next = cfg.nodes.find(n => n.id === seq[i]);
-            const edge = svg.querySelector(`[data-edge="${prev.id}-${next.id}"]`);
-            tl.add({
-              targets: dot, cx: next.x, cy: next.y, duration: 700, delay: 220,
-              update: (anim) => { if (edge && anim.progress > 10) edge.setAttribute("stroke", toneColor(next.tone)); },
-              complete: () => {
-                const r = svg.querySelector(`[data-node="${next.id}"] rect`);
-                r.setAttribute("fill", toneColor(next.tone)+"1f"); r.setAttribute("stroke", toneColor(next.tone));
-                window.anime({ targets: r, scale: [1, 1.06, 1], duration: 320, easing: "easeOutQuad", transformOrigin: `${next.x}px ${next.y}px` });
-              },
-            });
-          }
-          tl.add({ targets: dot, opacity: 0, duration: 350, delay: 500 });
-        }
-
-        function play_btn(isPlaying) {
-          play.disabled = isPlaying;
-          pause.disabled = !isPlaying;
-        }
-
-        play.addEventListener("click", () => {
-          if (timeline && timeline.paused && timeline.progress < 100) {
-            timeline.play(); setStatus("playing…","playing"); play_btn(true);
-          } else {
-            play(currentPath);
-          }
-        });
-        pause.addEventListener("click", () => {
-          if (timeline && !timeline.paused) { timeline.pause(); setStatus("paused","paused"); play_btn(false); }
-        });
-        restart.addEventListener("click", () => { if (timeline) { timeline.pause(); timeline.seek(0); } play(currentPath); });
-        paths.querySelectorAll(".sm-btn").forEach(b => b.addEventListener("click", () => { if (timeline) timeline.pause(); play(b.dataset.path); }));
-        speedPill.querySelectorAll("button").forEach(b => b.addEventListener("click", () => {
-          speed = parseFloat(b.dataset.speed);
-          speedPill.querySelectorAll("button").forEach(x => x.classList.toggle("active", x === b));
-          if (window.anime) window.anime.speed = speed;
-        }));
-
-        // Auto-play after layout settles
-        setTimeout(() => play(currentPath), 220);
       }
+      tl.add(dot, { opacity: 0, duration: 350, delay: 500 });
+    }
 
-      function btnIcon(symbol, title) {
-        const b = document.createElement("button");
-        b.type = "button"; b.className = "sm-icon-btn"; b.title = title; b.textContent = symbol;
-        return b;
-      }
+    playBtn.addEventListener("click", () => {
+      if (timeline && timeline.paused && !timeline.completed) {
+        timeline.play(); setStatus("playing…", "playing"); playBtn.disabled = true; pauseBtn.disabled = false;
+      } else { play(currentPath); }
+    });
+    pauseBtn.addEventListener("click", () => {
+      if (timeline && !timeline.paused) { timeline.pause(); setStatus("paused", "paused"); playBtn.disabled = false; pauseBtn.disabled = true; }
+    });
+    restartBtn.addEventListener("click", () => play(currentPath));
 
-      function init() {
-        injectStyles();
-        document.querySelectorAll(".state-machine").forEach(renderStateMachine);
-      }
-      if (document.readyState === "loading") {
-        document.addEventListener("DOMContentLoaded", init);
-      } else {
-        init();
-      }
-    })();
+    widget.querySelectorAll(".sm-paths .sm-btn").forEach(b => b.addEventListener("click", () => {
+      if (timeline) timeline.pause();
+      play(b.dataset.path);
+    }));
+    widget.querySelectorAll(".sm-speed-pill button").forEach(b => b.addEventListener("click", () => {
+      currentSpeed = parseFloat(b.dataset.speed);
+      widget.querySelectorAll(".sm-speed-pill button").forEach(x => x.classList.toggle("active", x === b));
+      animate.engine.speed = currentSpeed;
+    }));
+
+    // Auto-play after fonts settle
+    document.fonts.ready.then(() => setTimeout(() => play(currentPath), 220));
   </script>
 </body>
 </html>
