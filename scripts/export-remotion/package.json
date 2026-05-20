@@ -1,0 +1,23 @@
+{
+  "name": "explanatory-animations-remotion",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Remotion compositions for the explanatory-animations skill.",
+  "scripts": {
+    "start":  "remotion studio",
+    "render": "remotion render",
+    "build":  "remotion bundle src/index.ts"
+  },
+  "dependencies": {
+    "react":      "19.0.0",
+    "react-dom":  "19.0.0",
+    "remotion":   "4.0.230",
+    "@remotion/cli": "4.0.230"
+  },
+  "devDependencies": {
+    "typescript":        "5.4.5",
+    "@types/react":      "19.0.0",
+    "@types/react-dom":  "19.0.0",
+    "@types/node":       "22.7.0"
+  }
+}

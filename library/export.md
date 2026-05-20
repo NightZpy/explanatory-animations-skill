@@ -1,6 +1,17 @@
 # Export to video
 
-Four strategies, pick based on automation needs and what's installed. The first (the bundled script) is the path the skill recommends by default — the others stay documented so power users have options.
+Five strategies, pick based on automation needs and what's installed. Strategy 0 (Python script) and Strategy 4 (Remotion) are bundled with the skill; the rest stay documented for the cases where bundling doesn't help.
+
+**Quick chooser:**
+
+| You want… | Strategy |
+|---|---|
+| One MP4 from one widget, no Node | **0 — Python script** (`scripts/export-widget.py`) |
+| Live preview + Export button in browser, props panel | **4 — Remotion** (`scripts/export-remotion/`) |
+| Server-side / Lambda render at scale, batch personalization | **4 — Remotion** (Lambda mode) |
+| Quick one-off demo, recording from screen | **1 — Manual** |
+| WebM frames-by-rAF without Node | **2 — CCapture.js** |
+| Custom Node+Puppeteer pipeline in CI | **3 — Puppeteer** |
 
 ## Ask the user first
 
@@ -221,31 +232,65 @@ ffmpeg -i video.mp4 -i music.mp3 -filter_complex \
 
 (Adjust `volume=0.15` to taste — music should sit well under narration.)
 
-## Roadmap — Remotion integration
+## Strategy 4 — Remotion (in-browser preview + Export button)
 
-[Remotion](https://www.remotion.dev) is a React-based programmatic video framework: write components → render with `npx remotion render` → get an MP4. It's an excellent alternative for use cases the current pipeline doesn't cover cleanly:
+[Remotion](https://www.remotion.dev) is a React-based programmatic video framework. The skill ships compositions under `scripts/export-remotion/` so the user gets:
 
-- **In-browser export button** — a Remotion preview app served by the skill where the user previews the animation, clicks "Export", and downloads the MP4 without needing local ffmpeg or Playwright installed.
-- **Server-side rendering at scale** — Remotion Lambda renders 100s of variants in parallel (e.g. personalized reels per customer).
-- **Component reuse with the widgets** — port a pattern's anime.js + SVG output into a `<Composition>` so the same animation works both as a standalone HTML widget (for embedding in docs) and as a Remotion clip (for batch video rendering).
+- **Live preview + Export UI in the browser** (Remotion Studio). Pick composition → tweak props → click Render → download MP4. No manual ffmpeg config.
+- **Headless CLI render** for CI / scripted exports.
+- **Server-side / Lambda rendering at scale** (e.g. personalized reels per customer in batch).
 
-Why not now: Remotion requires a React+Node toolchain, which adds friction for the "I just want one MP4" case Strategy 0 already covers. The plan when it lands:
-
-```
-scripts/
-├── export-widget.py        # current — Playwright + ffmpeg (any HTML widget)
-└── export-remotion/        # planned — React + Remotion (composable, batchable, server-renderable)
-    ├── compositions/
-    │   ├── lifecycle.tsx
-    │   ├── system-flow.tsx
-    │   ├── text-effect.tsx
-    │   └── ...
-    └── render.config.ts
+```bash
+cd scripts/export-remotion
+npm install               # first time only (~250 MB, includes Chromium)
+npm start                 # opens Remotion Studio at http://localhost:3000
 ```
 
-Plus a documented bridge: any anime.js timeline can be wrapped in a Remotion `<Composition>` by mapping `frame → seek(frame * 1000 / fps)`, so the same source-of-truth animation drives both the standalone HTML widget AND the Remotion render.
+Click **Render** in the Studio sidebar → MP4 lands in `out/`.
 
-**Want this now?** Tell the skill "use Remotion" and it can scaffold a React project that imports the widget's animation logic as a Remotion composition.
+CLI for headless renders:
+```bash
+npx remotion render Lifecycle out/lifecycle.mp4
+
+# with custom props
+npx remotion render Lifecycle out/order.mp4 \
+  --props='{"title":"Order lifecycle","path":["queued","paid","shipped","delivered"]}'
+
+# vertical variant
+npx remotion render LifecycleVertical out/lifecycle-9-16.mp4
+```
+
+Currently bundled compositions: `Lifecycle` / `LifecycleVertical` (Pattern A), `TextScramble` / `TextScrambleVertical` (Pattern M). Adding more is a 30-line file per pattern — see `scripts/export-remotion/README.md` for the template.
+
+### Why Remotion vs the Python script
+
+| Aspect | Strategy 0 (Python) | Strategy 4 (Remotion) |
+|---|---|---|
+| Setup | `pip install playwright` + `ffmpeg` | `npm install` (one-time, ~250 MB) |
+| Source | Any HTML widget the skill produced | React components in `src/compositions/` |
+| In-browser preview | No | **Yes** (Studio) |
+| Built-in Export UI | No | **Yes** (Studio's Render button) |
+| Batch / Lambda at scale | Per-widget loop | **Native** (Remotion Lambda) |
+| Composition reuse | No | **Yes** (compositions are React components) |
+| Determinism for CI | Best-effort (Playwright timing) | **Required by design** (frame-pure functions) |
+| Workflow fit for content creator | One-off MP4 | Iterate on props live, batch personalize |
+
+### Porting an anime.js animation to Remotion
+
+The bridge is conceptual, not literal — Remotion is declarative (`useCurrentFrame()` is the only state), anime.js is imperative (timelines built upfront). Mapping table:
+
+| anime.js | Remotion equivalent |
+|---|---|
+| `createTimeline()` | derive everything from `useCurrentFrame()` |
+| `.add({ duration: 700 })` | `hopFrames = (700 / 1000) * fps` |
+| `delay: 200` | offset the start frame |
+| `ease: "inOutSine"` | `Easing.sin` or `Easing.bezier(...)` |
+| `anime.engine.speed = 2` | render at lower duration / higher fps |
+| `text.split()` + char animate | iterate chars + compute glyph per frame |
+| `loop: true` | modulo on the frame counter |
+| `svg.createDrawable` + `draw: 'a b'` | animate `strokeDashoffset` via `interpolate` |
+
+Both the standalone HTML widget AND the Remotion composition can share the same data shape (nodes / edges / paths / text / etc.). The animation logic is rewritten, the content stays the same. This means a pattern's `inputs the user must provide` schema in `patterns/X-name.md` doubles as the props shape for the Remotion `<Composition>`.
 
 ## Mistakes to avoid
 
