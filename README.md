@@ -69,24 +69,40 @@ explanatory-animations/
 
 ## Install
 
-### Personal (recommended — available across all your projects)
+### One-liner (recommended — available across all your projects)
 
 ```bash
-git clone https://github.com/<you>/explanatory-animations-skill.git \
-  ~/Documents/projects/claude/skills/explanatory-animations
-
-ln -s ~/Documents/projects/claude/skills/explanatory-animations \
-      ~/.claude/skills/explanatory-animations
+git clone https://github.com/NightZpy/explanatory-animations-skill.git \
+  ~/.claude/skills/explanatory-animations
 ```
 
-After Claude Code picks up the symlink (live or next session), verify with `/skills` — `explanatory-animations` should appear in the list.
+That's it. Claude Code picks up the skill live (no restart needed). Verify by typing `/` in Claude Code and looking for `explanatory-animations` in the menu, or by asking Claude *"animate how a request flows through a CDN"* — it should auto-invoke.
 
-### Per-project (committed to a repo)
+To update later:
+
+```bash
+cd ~/.claude/skills/explanatory-animations && git pull
+```
+
+### Per-project (committed to a project's repo)
 
 ```bash
 mkdir -p .claude/skills
-git submodule add https://github.com/<you>/explanatory-animations-skill.git \
+git submodule add https://github.com/NightZpy/explanatory-animations-skill.git \
   .claude/skills/explanatory-animations
+```
+
+Then commit the submodule. Anyone who clones the project with `--recurse-submodules` gets the skill too.
+
+### Development setup (when contributing)
+
+Clone to a stable location and symlink so edits to the source repo are picked up immediately:
+
+```bash
+git clone https://github.com/NightZpy/explanatory-animations-skill.git \
+  ~/Documents/projects/claude/skills/explanatory-animations
+ln -s ~/Documents/projects/claude/skills/explanatory-animations \
+      ~/.claude/skills/explanatory-animations
 ```
 
 ## Invoke
