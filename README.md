@@ -42,6 +42,12 @@ explanatory-animations/
 │   └── content-creator-uses.md    # priorities for reel/shorts/podcast — different from didactic
 ├── engine/
 │   └── anime-cheatsheet.md        # Anime.js v4 APIs + v3 → v4 migration table
+├── widget-helpers/                # drop-in JS modules any widget can include
+│   └── export-button.js           # floating "⬇ Export" → records WebM in-browser
+├── scripts/
+│   ├── render.py                  # autonomous renderer (preview URL or MP4)
+│   ├── export-widget.py           # back-compat alias → render.py
+│   └── export-remotion/           # Strategy 5 — React + Remotion Studio
 └── examples/
     ├── lifecycle.html             # Pattern A reference (v4)
     ├── system-flow.html           # Pattern B reference (v4)

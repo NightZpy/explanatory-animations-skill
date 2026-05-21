@@ -1,17 +1,25 @@
 # Export to video
 
-Five strategies, pick based on automation needs and what's installed. Strategy 0 (Python script) and Strategy 4 (Remotion) are bundled with the skill; the rest stay documented for the cases where bundling doesn't help.
+Six strategies. The first two are bundled with the skill and cover ~95% of cases. The rest are documented for power users.
 
 **Quick chooser:**
 
 | You want… | Strategy |
 |---|---|
-| **Autonomous: agent gives user a URL or MP4 with zero setup** | **0 — `scripts/render.py`** (auto-bootstraps deps in ~/.cache) |
-| Live preview + Render button in a Studio with props panel | **4 — Remotion** (`scripts/export-remotion/`) |
-| Server-side / Lambda render at scale, batch personalization | **4 — Remotion** (Lambda mode) |
-| Quick one-off demo, recording from screen | **1 — Manual** |
-| WebM frames-by-rAF without Node | **2 — CCapture.js** |
-| Custom Node + Puppeteer pipeline in CI | **3 — Puppeteer** |
+| **Click an Export button INSIDE the widget, browser does it all** | **0 — In-widget button** (`widget-helpers/export-button.js`, drop-in for ANY widget) |
+| **Autonomous: agent delivers URL or MP4 to the user with zero setup** | **1 — `scripts/render.py`** (auto-bootstraps deps in `~/.cache`) |
+| Live preview + Render button in Studio with props panel | **5 — Remotion** (`scripts/export-remotion/`) |
+| Server-side / Lambda render at scale, batch personalization | **5 — Remotion** (Lambda mode) |
+| Quick one-off demo, recording from screen | **2 — Manual** |
+| WebM frames-by-rAF without Node, hand-rolled | **3 — CCapture.js** (raw, lower-level than Strategy 0) |
+| Custom Node + Puppeteer pipeline in CI | **4 — Puppeteer** |
+
+**Strategy 0 vs 1 — when to use which:**
+
+- **Strategy 0** is for the USER. The widget itself has an Export button. The user is looking at the animation in the browser, decides "I want this as a video," clicks. No agent involvement needed. Works with ANY pattern the skill generates because all of them follow the `window.timeline` convention.
+- **Strategy 1** is for the AGENT. The agent wants to deliver a finished MP4 to the user as part of a conversation turn. Runs headless, returns a file path.
+
+Strategy 0 is the right default for content creators iterating on the animation. Strategy 1 is the right default when the agent is delivering a finished asset to a user who hasn't opened the browser yet.
 
 ## Ask the user first
 
@@ -24,7 +32,41 @@ When the user requests video export, confirm:
 5. **Format**: `mp4 (H.264)` / `webm (VP9)` / `gif` (only if ≤6 s, animations longer than that should be video)
 6. **With audio?** If yes, ask for narration script or background music track.
 
-## Strategy 0 — `scripts/render.py` (autonomous, the skill's default)
+## Strategy 0 — In-widget Export button (universal, drop-in)
+
+Add **one line** to any widget the skill generates and a floating "⬇ Export" button appears in the bottom-right. The user clicks it, picks aspect ratio / resolution / fps / duration in a small modal, and the browser records the timeline frame-by-frame, downloading a WebM file. No server, no agent, no setup.
+
+```html
+<!-- At the bottom of any widget HTML, after the widget's own scripts: -->
+<script src="${CLAUDE_SKILL_DIR}/widget-helpers/export-button.js" defer></script>
+```
+
+How it works:
+- The script lazy-loads `CCapture.js` + `html2canvas` from cdnjs on first export click.
+- It auto-detects the "stage" element (preferring `[data-export-target]` → `.bbg2-stage` → `.state-machine` → `.stage` → `main` → `body`). Override by setting `window.exportTarget = element`.
+- Calls `window.timeline.pause(); window.timeline.seek(0)` then steps `seek(t_ms)` per frame — deterministic regardless of CPU.
+- Rasterizes each frame via `html2canvas` and feeds the canvas to `CCapture.capture()`.
+- Output: `animation-WxH-timestamp.webm` in the user's Downloads folder.
+- Default options: 1080p / 60 fps / 16:9 / 6 seconds. All adjustable in the modal.
+
+This is the answer to the user's "click Export from the browser" UX. It works with ALL 16 patterns the skill defines, AND any future pattern, because it depends only on the `window.timeline` convention (already mandatory for every skill widget).
+
+**WebM vs MP4:** the button outputs WebM (browser-native, no transcoding needed). If MP4 is strictly required, run the WebM through ffmpeg:
+```bash
+ffmpeg -i animation.webm -c:v libx264 -crf 18 -pix_fmt yuv420p reel.mp4
+```
+Or feed it to the skill's `scripts/render.py --convert <webm>` (when that subcommand lands — roadmap).
+
+**Pitfalls specific to in-widget recording:**
+- `html2canvas` is slow per frame (~50-150ms). A 6-second 60fps clip takes ~30-60 seconds to encode in the browser. Acceptable for one-off exports, not for batch.
+- External fonts must be CORS-friendly (Google Fonts are fine).
+- SVG with `filter` (drop-shadow, blur) sometimes renders differently than the live widget — preview before claiming "done".
+
+For batch / CI / large-volume exports, use Strategy 1 (Playwright headless) instead.
+
+---
+
+## Strategy 1 — `scripts/render.py` (autonomous, the skill's default)
 
 The agent (not the user) invokes `scripts/render.py`. On first run it auto-bootstraps a private venv at `~/.cache/explanatory-animations/venv` with Playwright + Chromium + a bundled ffmpeg (via `imageio-ffmpeg`). The user installs nothing. Second run is cached and starts in <200ms.
 
@@ -93,7 +135,7 @@ Run `python3 scripts/render.py --help` for the full list. Most common:
 | `--timeout` | — | Preview mode auto-shutdown after N seconds |
 | `--no-open` | — | Preview mode — skip auto-opening browser |
 
-## Strategy 1 — Manual screen recording (fastest, no setup)
+## Strategy 2 — Manual screen recording (fastest, no setup)
 
 Best for: one-off exports, demos, when you don't need pixel-perfect output.
 
@@ -108,7 +150,7 @@ Best for: one-off exports, demos, when you don't need pixel-perfect output.
 
 Pros: 0 setup. Cons: includes browser chrome, not pixel-perfect, requires display.
 
-## Strategy 2 — CCapture.js (in-browser, no headless)
+## Strategy 3 — CCapture.js (in-browser, no headless)
 
 Best for: clean frames without browser chrome, no headless setup, runs from the user's browser.
 
@@ -163,7 +205,7 @@ Convert to MP4 after:
 ffmpeg -i output.webm -c:v libx264 -crf 18 -preset slow -pix_fmt yuv420p output.mp4
 ```
 
-## Strategy 3 — Puppeteer headless (automated, scriptable)
+## Strategy 4 — Puppeteer headless (automated, scriptable)
 
 Best for: batch export, CI/CD, embedding in a deploy pipeline.
 
@@ -237,7 +279,7 @@ ffmpeg -i video.mp4 -i music.mp3 -filter_complex \
 
 (Adjust `volume=0.15` to taste — music should sit well under narration.)
 
-## Strategy 4 — Remotion (in-browser preview + Export button)
+## Strategy 5 — Remotion (in-browser preview + Export button)
 
 [Remotion](https://www.remotion.dev) is a React-based programmatic video framework. The skill ships compositions under `scripts/export-remotion/` so the user gets:
 

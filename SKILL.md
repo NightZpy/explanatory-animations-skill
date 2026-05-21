@@ -115,7 +115,22 @@ Combine with the shared style libraries (`library/colors.md`, `typography.md`, `
 
 The `examples/` folder is **optional reference material** for humans who want to preview "what does Pattern N feel like." Pattern docs are self-contained — building a new animation does not require opening an example file.
 
-## Delivery — fully autonomous (THE AGENT, NOT THE USER, RUNS THIS)
+## Delivery — two complementary paths
+
+### Path 1 — In-widget Export button (the user clicks, browser does it all)
+
+**Drop `widget-helpers/export-button.js` into ANY widget the skill generates** and a floating "⬇ Export" button appears in the bottom-right. The user clicks it, picks aspect / resolution / fps / duration, and the browser records the timeline frame-by-frame, downloading a WebM file. No server, no Playwright, no Remotion port required.
+
+```html
+<!-- One line at the bottom of any widget HTML the skill generates: -->
+<script src="${CLAUDE_SKILL_DIR}/widget-helpers/export-button.js" defer></script>
+```
+
+Works because all skill-generated widgets respect the `window.timeline` convention (see `library/controls.md`). The button rasterizes via `html2canvas` per frame and assembles WebM via `CCapture.js` — both lazy-loaded from CDN on first click.
+
+Convert to MP4 if the user needs `.mp4` strictly: skill's `scripts/render.py` accepts a `.webm` file and runs it through bundled ffmpeg. Or the user runs `ffmpeg -i animation.webm -c:v libx264 reel.mp4`.
+
+### Path 2 — Agent-side autonomous render (no UI, just deliver)
 
 When the user wants the animation delivered as a URL to preview or as an MP4 file, **the agent invokes `scripts/render.py` directly via Bash** — the user does not install or configure anything. On first run the script bootstraps a private venv under `~/.cache/explanatory-animations/venv` with Playwright + Chromium + a bundled ffmpeg (`imageio-ffmpeg`). Subsequent runs reuse the cache (cold start < 200ms).
 
