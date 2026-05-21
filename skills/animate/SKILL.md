@@ -104,6 +104,21 @@ For creator content the user picks the effect directly — there's rarely a "wro
 
 Full spec in [`library/controls.md`](./library/controls.md).
 
+## Companion skills in this plugin
+
+This `animate` skill is the full-flow entrypoint (discovery → pick pattern → build widget → deliver URL or MP4). The plugin also exposes **focused sub-skills** for cases where the user wants only part of the flow:
+
+| Sub-skill | When the agent invokes it |
+|---|---|
+| `/explanatory-animations:pick-pattern` | User has a topic but doesn't know which of the 16 patterns fits. Outputs a recommendation, no widget. |
+| `/explanatory-animations:build-widget` | User already chose a pattern + has content. Outputs an HTML file, no export. |
+| `/explanatory-animations:export-widget` | User has a widget HTML and wants a preview URL or MP4 file. Runs `scripts/render.py`. |
+| `/explanatory-animations:add-export-button` | User has a widget HTML and wants a click-to-export button inside the page (browser-only, no server). |
+
+When in doubt, `animate` runs the whole pipeline. The focused sub-skills are for when the user has explicitly skipped a step (e.g. "I already have the widget, just give me an MP4" → `export-widget`).
+
+All sub-skills read the shared assets in this skill's directory: `patterns/`, `library/`, `engine/`, `widget-helpers/`, `scripts/`. They reach them via `../animate/<asset>` from their own folder.
+
 ## How to build a widget
 
 Each pattern doc (`patterns/X-name.md`) contains:

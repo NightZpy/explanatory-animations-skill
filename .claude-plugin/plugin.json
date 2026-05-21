@@ -1,0 +1,23 @@
+{
+  "name": "explanatory-animations",
+  "description": "Build polished interactive animated explanations and content-creator effects (16 patterns, Anime.js v4, in-widget Export button, autonomous render.py, optional Remotion).",
+  "version": "0.4.0",
+  "author": {
+    "name": "NightZpy"
+  },
+  "homepage": "https://github.com/NightZpy/explanatory-animations-skill",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/NightZpy/explanatory-animations-skill"
+  },
+  "license": "MIT",
+  "keywords": [
+    "animation",
+    "explainer",
+    "bytebytego",
+    "anime.js",
+    "content-creator",
+    "interactive-diagram",
+    "video-export"
+  ]
+}
