@@ -1,0 +1,59 @@
+name: 🐛 Bug report
+description: Something in the plugin doesn't work as documented.
+labels: [bug]
+body:
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Which surface is affected?
+      options:
+        - "A pattern's animation doesn't render correctly"
+        - "scripts/render.py fails or produces a broken MP4"
+        - "scripts/doctor.py reports a wrong state"
+        - "widget-helpers/export-button.js doesn't record / saves a broken WebM"
+        - "scripts/export-remotion/ (Remotion compositions)"
+        - "SKILL.md / docs are wrong or misleading"
+        - "Other"
+    validations:
+      required: true
+  - type: input
+    id: pattern-or-skill
+    attributes:
+      label: Which pattern code (A–P) or sub-skill (animate / pick-pattern / build-widget / export-widget / add-export-button) does this involve?
+      placeholder: e.g. Pattern B (system-flow) OR export-widget
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Ideally include a minimal widget HTML + the exact agent prompt / CLI invocation.
+      placeholder: |
+        1. Asked Claude to "animate how a request flows through a CDN"
+        2. Claude generated widget at /tmp/widget.html
+        3. Ran `python3 render.py --widget /tmp/widget.html --out reel.mp4`
+        4. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+      description: Include relevant stack traces / error messages / screenshots.
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: Environment
+      placeholder: "macOS 15 / Python 3.12 / Claude Code 2.1.x / Chromium bundled"
+    validations:
+      required: true
+  - type: textarea
+    id: extra
+    attributes:
+      label: Anything else?

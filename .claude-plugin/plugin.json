@@ -1,6 +1,6 @@
 {
   "name": "explanatory-animations",
-  "description": "Build polished interactive animated explanations and content-creator effects (16 patterns, Anime.js v4, in-widget Export button, autonomous render.py, optional Remotion).",
+  "description": "Build polished interactive animated explanations and content-creator effects from natural-language prompts. 16 patterns (lifecycles, system flows, algorithms, mechanical motion, orbits, particles, LLM internals, math, geographic maps, cross-sections, timelines, text effects, counters, shape morph, line drawing). Self-contained HTML widgets (Anime.js v4), in-browser Export button, autonomous MP4 renderer, optional Remotion Studio. Auto-installs deps with consent on first run.",
   "version": "0.4.0",
   "author": {
     "name": "NightZpy"
@@ -13,11 +13,32 @@
   "license": "MIT",
   "keywords": [
     "animation",
+    "animated-explainer",
     "explainer",
+    "visualization",
     "bytebytego",
     "anime.js",
-    "content-creator",
+    "anime-js",
     "interactive-diagram",
-    "video-export"
+    "state-machine",
+    "system-design",
+    "architecture-diagram",
+    "lifecycle",
+    "algorithm-visualization",
+    "math-visualization",
+    "content-creator",
+    "social-media",
+    "reels",
+    "shorts",
+    "scramble-text",
+    "counter-animation",
+    "svg-line-drawing",
+    "sound-wave",
+    "video-export",
+    "mp4-export",
+    "webm-export",
+    "playwright",
+    "remotion",
+    "ffmpeg"
   ]
 }

@@ -1,187 +1,265 @@
 # explanatory-animations
 
-A **Claude Code plugin** for building **didactic animations** + **content-creator effects** — interactive, replayable, controllable visualizations that explain a concept (lifecycle, algorithm, mechanical / orbital motion, LLM internals, math derivation, geographic flow, etc.) or capture attention on social media (scramble text, big-number counters, shape morphing, SVG line drawing, sound waves).
+[![Validate](https://github.com/NightZpy/explanatory-animations-skill/actions/workflows/validate.yml/badge.svg)](https://github.com/NightZpy/explanatory-animations-skill/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Plugin: Claude Code](https://img.shields.io/badge/Claude%20Code-plugin-orange)](https://github.com/anthropics/claude-plugins-community)
+[![Version](https://img.shields.io/badge/version-0.4.0-green)](CHANGELOG.md)
 
-Designed to match the visual quality of **ByteByteGo / Stripe Docs / 3Blue1Brown / MDN**, with a shared visual language (palette, typography, controls) across **16 patterns**.
+> A [Claude Code](https://code.claude.com) plugin for building **polished interactive animated explanations** and **content-creator effects** in your browser — 16 patterns covering didactic visualizations (ByteByteGo-style system flows, lifecycles, algorithms, mechanical motion, LLM internals, math derivations, geographic maps, …) and creator effects (scramble text, big-number counters, shape morphing, SVG line drawing). Auto-installs, runs locally, exports to MP4 with one command.
+
+<!-- ─── HERO DEMO ─────────────────────────────────────────────────────────
+TODO: drop a 8-12 second hero GIF here showing the full agent flow:
+  user prompt → Claude runs discovery → widget appears → MP4 is delivered.
+Suggested aspect: 16:9 or 21:9. File: docs/hero.gif (or .mp4 if GitHub
+markdown supports it — it does, via HTML5 <video>).
+────────────────────────────────────────────────────────────────────────-->
+
+<!-- ![hero demo](docs/hero.gif) -->
+
+---
+
+## What it does
+
+Ask Claude in plain English (or Spanish) to animate something — a system architecture, an algorithm, a workflow, a piece of math, a content-creator reel — and the plugin produces a self-contained interactive HTML widget. From there you can:
+
+- **Watch + replay it in the browser** with built-in Play / Pause / Restart / Speed controls.
+- **Click "⬇ Export"** in the widget to record a WebM directly in the browser.
+- **Get an MP4** from Claude by asking for the output as video — the agent handles render and delivery autonomously.
+- **Use Remotion Studio** for a richer preview + Render UI (live props panel, programmatic rendering, Lambda batch).
+
+The plugin runs the **5-step discovery protocol** before generating anything — confirming topic, pattern, palette/typography/icons, complexity, and export needs — so the output matches what you actually wanted. Works in any language.
+
+<!-- ─── PATTERN GALLERY (4 quadrants) ─────────────────────────────────────
+TODO: a 2×2 grid of GIFs showing one pattern per family. Suggested:
+  · A (lifecycle) — top-left
+  · B (system flow) — top-right
+  · M (text scramble) — bottom-left
+  · P (sound wave) — bottom-right
+Place under docs/gallery/{A,B,M,P}.gif
+────────────────────────────────────────────────────────────────────────-->
+
+<!--
+<table>
+<tr>
+  <td><img src="docs/gallery/A.gif" alt="Pattern A — Lifecycle"/></td>
+  <td><img src="docs/gallery/B.gif" alt="Pattern B — System flow"/></td>
+</tr>
+<tr>
+  <td><img src="docs/gallery/M.gif" alt="Pattern M — Text scramble"/></td>
+  <td><img src="docs/gallery/P.gif" alt="Pattern P — Sound wave"/></td>
+</tr>
+</table>
+-->
 
 ## Install
 
-This repo is a **Claude Code plugin** (with `.claude-plugin/plugin.json` manifest), so it installs via Claude's plugin manager. Two ways:
+Three install paths:
 
-### Via marketplace (one-time setup, recommended)
+### A · Via the official Claude community marketplace (planned)
+
+Once approved into [`anthropics/claude-plugins-community`](https://github.com/anthropics/claude-plugins-community):
+
+```
+/plugin marketplace add anthropics/claude-plugins-community
+/plugin install explanatory-animations@claude-community
+```
+
+### B · Direct from this repo (works today)
 
 ```
 /plugin marketplace add NightZpy/explanatory-animations-skill
 /plugin install explanatory-animations
 ```
 
-Updates land automatically when `version` in `plugin.json` is bumped. Run `/plugin list` to verify.
-
-### Direct from this repo
-
-Without going through a marketplace:
+### C · Local development with `--plugin-dir`
 
 ```bash
-# Clone into a stable location (anywhere)
-git clone https://github.com/NightZpy/explanatory-animations-skill.git ~/dev/explanatory-animations-skill
-
-# Tell Claude Code about it for the current session
-claude --plugin-dir ~/dev/explanatory-animations-skill
+git clone https://github.com/NightZpy/explanatory-animations-skill.git
+cd explanatory-animations-skill
+claude --plugin-dir .
 ```
 
-For a one-off session without persisting the install, use `--plugin-dir` only for that launch.
-
-### Standalone-skill mode (no plugin manager)
-
-The `main` branch ships the same content as a **standalone skill** (no manifest, no namespacing) for users who prefer `git clone ~/.claude/skills/`. Switch branches if you want that flavor:
-
-```bash
-git clone -b main https://github.com/NightZpy/explanatory-animations-skill.git \
-  ~/.claude/skills/explanatory-animations
-```
-
-After install, the plugin exposes:
-
-| What | How to invoke |
-|---|---|
-| Main skill | `/explanatory-animations:animate` (or just describe what you want — auto-invokes) |
-
-## How Claude uses it
-
-1. **User says** "animate this", "visualize X", "ByteByteGo style", "explica con animación cómo funciona…", "make a scramble text reveal", "counter going up to 50K", etc.
-2. **Claude runs the discovery protocol** (5 quick questions: topic, pattern, style, complexity, interactivity).
-3. **User answers**, or says "you choose" for any step.
-4. **Claude picks one of 16 patterns** and reads the relevant `patterns/X-name.md` + style library refs.
-5. **Claude generates** a self-contained HTML widget. Then delivers either:
-   - **A preview URL** via `scripts/render.py` (auto-bootstraps deps in `~/.cache/`), OR
-   - **An MP4 file** via the same script in `--out` mode, OR
-   - **Embeds a `widget-helpers/export-button.js`** so the user can click Export in the browser themselves and download WebM, OR
-   - **Generates a Remotion `<Composition>`** under `scripts/export-remotion/` for in-Studio preview + Render button (when batch / personalized rendering is needed).
-
-## What's in this plugin
+After install, the plugin exposes 5 namespaced skills under `/`:
 
 ```
-explanatory-animations-skill/                ← plugin root
-├── .claude-plugin/
-│   └── plugin.json                          ← plugin manifest
-├── README.md                                ← this file
-├── LICENSE                                  ← MIT
-└── skills/
-    └── animate/                             ← the skill (only one for now)
-        ├── SKILL.md                         ← entry point — discovery + index
-        ├── patterns/                        ← 16 deep-dive pattern docs + index + mistakes
-        │   ├── A-lifecycle.md   ... L-timeline.md      (12 didactic)
-        │   └── M-text-effects.md  ... P-svg-line-drawing.md   (4 creator)
-        ├── library/                         ← shared style references
-        │   ├── colors.md, typography.md, icons.md
-        │   ├── controls.md, timing.md, export.md
-        │   └── content-creator-uses.md
-        ├── engine/
-        │   └── anime-cheatsheet.md          ← Anime.js v4 APIs + v3→v4 migration
-        ├── widget-helpers/
-        │   └── export-button.js             ← drop-in Export button (any widget)
-        ├── scripts/
-        │   ├── render.py                    ← autonomous renderer (preview URL or MP4)
-        │   ├── export-widget.py             ← alias → render.py
-        │   └── export-remotion/             ← React + Remotion Studio
-        └── examples/
-            ├── lifecycle.html, system-flow.html
-            ├── text-scramble.html, counter-stars.html
-            ├── shape-drift.html, sound-wave.html
-            └── README.md
+/explanatory-animations:animate              full flow (discovery → build → deliver)
+/explanatory-animations:pick-pattern         help me choose which of 16 patterns fits
+/explanatory-animations:build-widget         pattern + content → HTML widget (no export)
+/explanatory-animations:export-widget        widget HTML → MP4 or preview URL
+/explanatory-animations:add-export-button    inject the Export button into existing widget
 ```
 
-> **Single skill, multiple delivery surfaces.** This plugin currently ships one skill (`animate`). The architecture supports adding more in `skills/<name>/SKILL.md` — e.g. an `export` skill that triggers only when the user wants to record an already-open widget, or a `from-spec` skill that takes a YAML config and generates the widget without the discovery dialogue. Those are roadmap items.
+Or just describe what you want — the plugin auto-invokes based on semantic intent, in any language.
 
-## Patterns at a glance
+## How it works in one minute
+
+<!-- ─── INTERACTION FLOW DIAGRAM ──────────────────────────────────────────
+TODO: a screenshot or rough sketch of the agent <-> user back-and-forth.
+Place at docs/flow-diagram.png (a quick sketch or screenshot is fine).
+────────────────────────────────────────────────────────────────────────-->
+
+<!-- ![interaction flow](docs/flow-diagram.png) -->
+
+1. **You ask** — "animate how a request flows through our CDN" / "make me a scramble-text intro for a reel" / "show the OSI 7 layers as a stack" / "explica con animación el sistema solar".
+2. **Claude runs the 5-step discovery protocol** — confirms topic, recommends a pattern, asks about palette / typography / icons / aspect ratio / export.
+3. **Claude generates an HTML widget** — self-contained, no build step, loads [Anime.js v4](https://animejs.com) from `esm.sh` + Google Fonts.
+4. **Claude delivers the result** — either a `localhost` URL it opens in your browser, or an MP4 file in `/tmp/`. The agent invokes `scripts/render.py` which auto-bootstraps Playwright + Chromium + ffmpeg in `~/.cache/explanatory-animations/` on the first run only (with explicit consent + a transparent breakdown of what's about to download).
+5. **You watch + share** — the widget has built-in controls (Play / Pause / Restart / Speed / optional path selector / status). The optional in-widget **⬇ Export** button records WebM directly from the browser. The optional **Remotion** companion gives you a Studio with live props panel + Render button.
+
+## Pattern catalog (16 patterns)
 
 **Family 1 — Didactic (teach a concept)**
 
-| Code | Best for |
-|---|---|
-| **A** Lifecycle | Job lifecycle, order status, ticket state |
-| **B** System flow | Request through CDN / app / DB layers (ByteByteGo) |
-| **C** Cursor | Sorting / search / traversal algorithms |
-| **D** Comparison | A vs B (with / without cache, monolith vs micro) |
-| **E** Math reveal | Formula derived term-by-term |
-| **F** Mechanical | Engines, gears, pumps, clocks |
-| **G** Orbital | Solar system, atomic shells |
-| **H** Particle flow | Data flowing through wires, traffic, electrons |
-| **I** Layered transform | LLM internals, neural net, compiler stages |
-| **J** Geographic | Regional request flow, supply chain, migration |
-| **K** Cross-section | OSI 7 layers, memory hierarchy, strata |
-| **L** Timeline | TLS handshake, OAuth, signal timing |
+| Code | Pattern | Best for | Doc |
+|---|---|---|---|
+| **A** | Lifecycle / state machine | Job lifecycle, order status, ticket state | [doc](skills/animate/patterns/A-lifecycle.md) |
+| **B** | System flow (ByteByteGo) | Request through layered subsystems | [doc](skills/animate/patterns/B-system-flow.md) |
+| **C** | Cursor over data structure | Sorting / search / traversal algorithms | [doc](skills/animate/patterns/C-algorithm-cursor.md) |
+| **D** | Side-by-side comparison | A vs B (with/without cache, monolith vs micro) | [doc](skills/animate/patterns/D-comparison.md) |
+| **E** | Term-by-term math reveal | Formula derived stepwise | [doc](skills/animate/patterns/E-math-reveal.md) |
+| **F** | Mechanical / kinematic | Engines, gears, pendulum | [doc](skills/animate/patterns/F-mechanical.md) |
+| **G** | Orbital / celestial | Solar system, atoms | [doc](skills/animate/patterns/G-orbital.md) |
+| **H** | Particle flow | Data flow, traffic, electrons | [doc](skills/animate/patterns/H-particle-flow.md) |
+| **I** | Layered transformation | LLM internals, neural net, compiler stages | [doc](skills/animate/patterns/I-layered-transform.md) |
+| **J** | Geographic map | Regional flows, supply chain | [doc](skills/animate/patterns/J-geographic-map.md) |
+| **K** | Cross-section / stack | OSI 7 layers, memory hierarchy, strata | [doc](skills/animate/patterns/K-cross-section.md) |
+| **L** | Timeline / sequence | TLS handshake, OAuth, signal timing | [doc](skills/animate/patterns/L-timeline.md) |
 
 **Family 2 — Content creator (capture attention)**
 
-| Code | Best for |
-|---|---|
-| **M** Text effects | Reel intros, scramble headlines, magnet on hover, CTA reveal |
-| **N** Counter / clock | 10K / $1M / 50K star reveal, flip-digit clock, KPI dashboard |
-| **O** Shape morph | Generative background loops, podcast intro motion, ambient bg |
-| **P** SVG line drawing | Sound waves, sonar pings, logo reveal, route trace |
+| Code | Pattern | Best for | Doc |
+|---|---|---|---|
+| **M** | Text effects | Reel intros, scramble headlines, magnet on hover, CTA reveal | [doc](skills/animate/patterns/M-text-effects.md) |
+| **N** | Numeric counter / clock | 10K / $1M / 50K star reveal, flip-digit clock, KPI dashboard | [doc](skills/animate/patterns/N-counter.md) |
+| **O** | Shape morph / layered transforms | Generative loops, podcast intros, ambient backgrounds | [doc](skills/animate/patterns/O-shape-morph.md) |
+| **P** | SVG line drawing | Sound waves, sonar pings, logo reveal, route trace | [doc](skills/animate/patterns/P-svg-line-drawing.md) |
 
-## Export pipeline (6 strategies)
-
-The skill ships a layered export system — pick the right one for the use case. Full details in `skills/animate/library/export.md`.
-
-| Strategy | When to use |
-|---|---|
-| **0 — In-widget Export button** | User is in the browser, clicks "⬇ Export" → WebM in Downloads/. Works with ANY pattern. |
-| **1 — Autonomous `render.py`** | Agent delivers URL or MP4 to user. Auto-bootstraps Playwright + ffmpeg in `~/.cache/`. |
-| **2 — Manual screen recording** | Quick one-off, no setup. |
-| **3 — Raw CCapture.js** | Hand-rolled in-browser recording with custom timing. |
-| **4 — Puppeteer headless** | Custom Node + Puppeteer CI pipeline. |
-| **5 — Remotion** | React Studio with live preview + props panel + Render button + Lambda batch. |
+Tie-breaker order: **L → A → B → I → K → F → G → H → J → C → D → E**.
 
 ## Style consistency
 
-Every pattern shares:
+Every pattern shares one visual language:
 
-- **Color palette** — 3 presets (Voltage / Editorial / Neon dark) + brand-aligned option
-- **Typography** — 3 pairings (Geist / Fraunces / Space Grotesk) all with mono fallback
-- **Controls strip** — Play / Pause / Restart / Speed pill / Path selector / Status
-- **Accessibility** — `prefers-reduced-motion`, keyboard nav, screen-reader roles
-- **Mobile fallback** — ≤720px gracefully degrades
+- **Palette** — 3 presets (Voltage / Editorial / Neon dark) + brand-aligned option. See [`library/colors.md`](skills/animate/library/colors.md).
+- **Typography** — 3 pairings (Geist+Geist Mono / Fraunces+JetBrains Mono / Space Grotesk+IBM Plex Mono) — never Arial / Inter / Roboto. See [`library/typography.md`](skills/animate/library/typography.md).
+- **Iconography** — emoji (default) / Lucide / custom SVG / user-provided assets. See [`library/icons.md`](skills/animate/library/icons.md).
+- **Controls strip** — Play / Pause / Restart / Speed pill / optional Path selector / Status indicator. See [`library/controls.md`](skills/animate/library/controls.md).
+- **Timing reference** — duration + easing per pattern. See [`library/timing.md`](skills/animate/library/timing.md).
+- **Accessibility** — `prefers-reduced-motion`, keyboard nav, screen-reader roles, mobile ≤720px graceful degrade.
 
-So all animations look like they belong to the same publication, regardless of pattern.
+## Export pipeline (6 strategies)
 
-## Why a plugin (not just a skill)?
+Full details in [`skills/animate/library/export.md`](skills/animate/library/export.md). Quick chooser:
 
-Without it, asking Claude to "animate this explanation" produces: static row of emoji cards with a dot, diagonal arrows that look like a UML draft, no controls, generic Inter font, auto-play that's already over. With it, Claude produces real interactive pedagogically-honest animations — and **asks first** instead of guessing.
+| You want… | Strategy |
+|---|---|
+| **In-browser "⬇ Export" button** the user clicks → WebM downloads. Works with ANY pattern. | **0 — In-widget button** (`widget-helpers/export-button.js`) |
+| **Agent delivers a URL or MP4 file** to the user with zero setup. Auto-bootstraps deps in `~/.cache/`. | **1 — `scripts/render.py`** |
+| Quick one-off demo from screen | **2 — Manual screen recording** |
+| Hand-rolled in-browser recording with custom timing | **3 — CCapture.js (raw)** |
+| Custom Node + Puppeteer CI pipeline | **4 — Puppeteer headless** |
+| **Studio with live preview + Render button + props panel + Lambda batch** | **5 — Remotion** (`scripts/export-remotion/`) |
 
-The plugin layout (vs a standalone skill in `~/.claude/skills/`) gives:
+<!-- ─── EXPORT BUTTON DEMO ────────────────────────────────────────────────
+TODO: 8-second GIF showing the user clicking the ⬇ Export button, picking
+options, watching the progress bar, and the WebM landing in Downloads/.
+File: docs/export-button.gif
+────────────────────────────────────────────────────────────────────────-->
 
-- **Versioned releases** — `version` in `plugin.json` controls when users see updates.
-- **`/plugin install` UX** — no manual `git clone` paths to memorize.
-- **Marketplace distribution** — submit to `anthropics/claude-plugins-community` for one-line discovery.
-- **Future skills** — easy to add `skills/export/` or `skills/from-spec/` siblings.
-- **Namespacing** — `/explanatory-animations:animate` won't conflict with another `animate` skill.
+<!-- ![export button demo](docs/export-button.gif) -->
 
-## Companion skills
+## First-time setup (what the plugin downloads)
 
-- **`frontend-design`** — for decorative motion (hero animations, scroll parallax). Use that one when motion is for *delight*, this one when motion is for *teaching* or *content creation*.
+The plugin is transparent about installs. The first time you ask for an MP4, the agent runs `scripts/doctor.py` and shows you what's about to happen before downloading anything:
 
-## License
+```
+Para exportar este widget necesito instalar:
+  • Playwright (~50 MB pip wheel)
+  • Chromium (~150 MB)
+  • ffmpeg: tu sistema ya lo tiene, lo reuso (skip 25 MB de download)
 
-MIT. See `LICENSE`.
+Todo va a ~/.cache/explanatory-animations/ — aislado de tu sistema.
+Future runs reuse this cache (<200ms cold start).
+Continúo? (la próxima vez ya no te pregunto)
+```
+
+Run the doctor manually any time:
+
+```bash
+python3 ~/.claude/plugins/explanatory-animations/skills/animate/scripts/doctor.py
+# → JSON report on stdout, human summary on stderr
+```
+
+The cache lives at `~/.cache/explanatory-animations/`. To uninstall, delete that directory + `/plugin uninstall explanatory-animations`.
+
+## Examples
+
+Six standalone reference implementations under [`skills/animate/examples/`](skills/animate/examples/). Open any `.html` file directly in a browser — no build step.
+
+| File | Pattern | What it demos |
+|---|---|---|
+| `lifecycle.html` | A | Branching state machine with happy / failure / retry paths |
+| `system-flow.html` | B | 2D architecture with boundary regions, orthogonal arrows, numbered step badges, glowing packet |
+| `text-scramble.html` | M | Four effect variants on one headline: scramble / cascade / wave / magnet |
+| `counter-stars.html` | N | 50K star counter with multi-stage easing + particle burst |
+| `shape-drift.html` | O | Layered SVG shapes with randomized keyframes — generative background |
+| `sound-wave.html` | P | 80 vertical lines + 40 concentric circles drawing themselves — sonar / radio visualizer |
+
+<!-- ─── EXAMPLES VIDEO ──────────────────────────────────────────────────
+TODO: a 30-60 second video walking through each of the 6 examples at 1x speed.
+Or YouTube link if you upload it.
+─────────────────────────────────────────────────────────────────────────-->
+
+<!-- [![Examples walkthrough](docs/examples-thumb.png)](https://youtu.be/REPLACE) -->
+
+## FAQ
+
+**Q: ¿Funciona en español?**
+Sí. El plugin se invoca por intención semántica, no por keywords literales. *"explica con animación cómo funciona la plataforma"*, *"hacéme un video animado de cómo funciona X"*, *"muestra el flujo paso a paso"* — todo dispara el plugin.
+
+**Q: Do I need Node.js to use this?**
+No. The autonomous renderer (`render.py`) is Python-only and bundles ffmpeg via `imageio-ffmpeg`. Only the **Remotion** export strategy (#5) needs Node — and it's optional.
+
+**Q: How big is the first-time install?**
+~175–200 MB into `~/.cache/explanatory-animations/`: Playwright (~50 MB) + Chromium (~150 MB) + ffmpeg (~25 MB if your system doesn't already have it). The agent shows this breakdown before downloading anything.
+
+**Q: Is the cache portable / shareable?**
+The cache is per-machine. To migrate a setup, copy `~/.cache/explanatory-animations/` to the new machine and the second run skips bootstrap.
+
+**Q: Why Anime.js v4 specifically?**
+v4 ships first-class primitives the patterns rely on: `text.split()` for character-level animation (Pattern M), `svg.createDrawable()` for line drawing (Pattern P), parametric easings (`inOut(N)` / `out(N)`), and `createSpring()` for mechanical patterns. It's ~14 KB gzipped, MIT-licensed, and works without a build step.
+
+**Q: Can I use this commercially?**
+Yes — MIT license. The third-party libs used (Anime.js MIT, Playwright Apache 2.0, ffmpeg LGPL/GPL with the imageio-ffmpeg LGPL build, html2canvas MIT, CCapture.js MIT, Remotion EULA — paid for companies ≥4 people) have their own terms; Strategies 0/1 are fully free for any use.
+
+**Q: ¿Qué pasa si el render falla?**
+`render.py` deja un mensaje claro en stderr y exit code distinto de cero. La cache de `~/.cache/` queda intacta — un retry no re-instala. El JSON output incluye el error path para diagnóstico.
+
+**Q: How do I add my own pattern (Q, R, …)?**
+See [`CONTRIBUTING.md`](CONTRIBUTING.md). It's additive: drop a `Q-<name>.md` in `patterns/`, add a row to the index + main SKILL.md, optionally an example, bump version, PR.
 
 ## Roadmap
 
-- [ ] Reference implementations for patterns C–L
-- [ ] `scripts/generate-widget.py` — generate complete widget HTML from a YAML config
+- [ ] Reference implementations for patterns C–L (currently only A / B / M / N / O / P have one)
 - [ ] `scripts/render.py --convert <webm>` subcommand (WebM → MP4 via bundled ffmpeg)
 - [ ] Brand-aligned palette generator (input: brand hex → output: full token set)
-- [ ] Submit to `anthropics/claude-plugins-community` marketplace
 - [ ] Pattern Q — Network graph (force-directed)
 - [ ] Pattern R — 3D / isometric (CSS 3D transforms)
-- [ ] Second skill `skills/export/` for widget-already-open recording-only flow
+- [ ] Port patterns B / C / I / L / N to Remotion compositions
+- [ ] Submit to `anthropics/claude-plugins-community` marketplace
 
-## Contribute
+## Contributing
 
-If you add a new pattern, follow the existing structure:
+See [CONTRIBUTING.md](CONTRIBUTING.md). Bug reports + feature requests via [issues](https://github.com/NightZpy/explanatory-animations-skill/issues/new/choose).
 
-1. Add an entry in `skills/animate/patterns/_index.md` and `skills/animate/SKILL.md` → "Pattern catalog"
-2. Create `skills/animate/patterns/<letter>-<name>.md` using the same sections as existing pattern docs
-3. (optional) Add a reference implementation in `skills/animate/examples/`
-4. Submit a PR with a 1-paragraph description of when to use the new pattern vs the existing ones
+## Companion skills
+
+- **`frontend-design`** (separate plugin) — for decorative motion (hero animations, scroll parallax, decorative micro-interactions). Use that when motion is for *delight*, this plugin when motion is for *teaching* or *content creation*.
+
+## License
+
+MIT. See [LICENSE](LICENSE).
+
+## Credits
+
+Built on top of [Anime.js v4](https://animejs.com) (Julian Garnier, MIT), [Playwright](https://playwright.dev) (Microsoft, Apache 2.0), [html2canvas](https://html2canvas.hertzen.com) (Niklas von Hertzen, MIT), [CCapture.js](https://github.com/spite/ccapture.js) (Jaume Sánchez, MIT), [Remotion](https://www.remotion.dev) (Remotion GmbH, custom EULA), and [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) (LGPL ffmpeg build).
