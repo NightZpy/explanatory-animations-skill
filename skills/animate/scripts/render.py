@@ -58,12 +58,10 @@ VENV_DIR   = CACHE_ROOT / "venv"
 VENV_PY    = VENV_DIR / ("Scripts" if os.name == "nt" else "bin") / "python"
 VENV_PIP   = VENV_DIR / ("Scripts" if os.name == "nt" else "bin") / "pip"
 STAMP_FILE = CACHE_ROOT / "deps-installed.stamp"
-DEPS_VERSION = "v1"   # bump if dep set changes
+DEPS_VERSION = "v2"   # bump invalidates cache (last change: system-ffmpeg reuse)
 
-REQUIRED_PIP = [
-    "playwright>=1.46",
-    "imageio-ffmpeg>=0.5",
-]
+REQUIRED_PIP_BASE   = ["playwright>=1.46"]
+REQUIRED_PIP_FFMPEG = ["imageio-ffmpeg>=0.5"]
 
 
 def _log(msg: str) -> None:
@@ -75,31 +73,85 @@ def _in_venv() -> bool:
     return pathlib.Path(sys.executable).resolve() == VENV_PY.resolve()
 
 
-def _bootstrap_and_relaunch() -> None:
+def _have_system_ffmpeg() -> str | None:
+    """Return the path to system ffmpeg if it's installed, else None."""
+    p = shutil.which("ffmpeg")
+    if not p:
+        return None
+    try:
+        subprocess.run([p, "-version"], capture_output=True, check=True, timeout=5)
+        return p
+    except (subprocess.CalledProcessError, FileNotFoundError, subprocess.TimeoutExpired):
+        return None
+
+
+def _prompt_consent(default_yes: bool, will_install_ffmpeg: bool) -> bool:
+    """Ask the user before downloading ~200 MB. If --yes was passed OR
+    stdin isn't a TTY (agent invocation), accept the default."""
+    mb = 200 if will_install_ffmpeg else 175
+    msg = (
+        f"\n[render] First-time setup for the explanatory-animations skill:\n"
+        f"  • Create private venv at {VENV_DIR}\n"
+        f"  • Download Playwright + Chromium + ffmpeg helpers (~{mb} MB)\n"
+        f"  • No system-wide changes — everything lives under ~/.cache/\n"
+        f"  • Future runs reuse this cache and start in <200 ms\n"
+    )
+    if will_install_ffmpeg:
+        msg += "  • System ffmpeg NOT found — will install bundled imageio-ffmpeg wheel\n"
+    else:
+        msg += "  • System ffmpeg detected — will reuse it (skip imageio-ffmpeg download)\n"
+    sys.stderr.write(msg)
+    if default_yes or not sys.stdin.isatty():
+        sys.stderr.write("[render] proceeding (auto-yes — pass --no-bootstrap to abort)\n")
+        return True
+    sys.stderr.write("[render] continue? [Y/n] ")
+    sys.stderr.flush()
+    ans = sys.stdin.readline().strip().lower()
+    return ans in ("", "y", "yes", "s", "si", "sí")
+
+
+def _bootstrap_and_relaunch(consent: bool) -> None:
     """Build venv, install deps + chromium, then re-exec inside the venv.
 
     Idempotent: second call is a no-op aside from the stamp check.
+    Honors a `--no-bootstrap` flag to abort cleanly if the user said no.
     """
     CACHE_ROOT.mkdir(parents=True, exist_ok=True)
 
+    system_ffmpeg = _have_system_ffmpeg()
+    need_consent = not VENV_PY.exists() or not (STAMP_FILE.exists() and STAMP_FILE.read_text().strip() == DEPS_VERSION)
+
+    if need_consent and not consent:
+        agreed = _prompt_consent(default_yes=False, will_install_ffmpeg=(system_ffmpeg is None))
+        if not agreed:
+            sys.stderr.write("[render] aborted by user — re-run with --yes to skip the prompt next time\n")
+            sys.exit(3)
+
     # Build venv if missing.
     if not VENV_PY.exists():
-        _log(f"first-time setup → creating venv at {VENV_DIR}")
+        _log(f"creating venv at {VENV_DIR}")
         subprocess.check_call([sys.executable, "-m", "venv", str(VENV_DIR)])
 
-    # Re-stamp on dep version bump.
+    # (Re)install deps if stamp missing / version mismatch.
     stamp_ok = STAMP_FILE.exists() and STAMP_FILE.read_text().strip() == DEPS_VERSION
     if not stamp_ok:
-        _log("installing playwright + imageio-ffmpeg (one-time, ~200 MB)")
+        _log("upgrading pip")
         subprocess.check_call([str(VENV_PIP), "install", "--quiet", "--upgrade", "pip"])
-        subprocess.check_call([str(VENV_PIP), "install", "--quiet", *REQUIRED_PIP])
+        deps = list(REQUIRED_PIP_BASE)
+        if system_ffmpeg is None:
+            deps += REQUIRED_PIP_FFMPEG
+            _log("installing playwright + imageio-ffmpeg")
+        else:
+            _log(f"installing playwright (reusing system ffmpeg at {system_ffmpeg})")
+        subprocess.check_call([str(VENV_PIP), "install", "--quiet", *deps])
         # Chromium for Playwright.
+        _log("downloading Chromium for Playwright (largest step, ~150 MB)")
         try:
             subprocess.check_call([str(VENV_PY), "-m", "playwright", "install", "chromium"])
         except subprocess.CalledProcessError:
-            _log("warning: playwright chromium install returned non-zero — continuing")
+            _log("warning: playwright chromium install returned non-zero — continuing anyway")
         STAMP_FILE.write_text(DEPS_VERSION)
-        _log("deps installed; cache will be reused next time")
+        _log(f"done — cache will be reused next time ({VENV_DIR})")
 
     # Re-launch ourselves inside the venv.
     os.execv(str(VENV_PY), [str(VENV_PY), __file__, *sys.argv[1:]])
@@ -107,18 +159,48 @@ def _bootstrap_and_relaunch() -> None:
 
 # Bootstrap if we're not already in the venv. After execv we resume in the venv.
 if not _in_venv():
-    _bootstrap_and_relaunch()
+    # Side commands that don't need the venv at all.
+    if "--doctor" in sys.argv:
+        doctor_path = pathlib.Path(__file__).resolve().parent / "doctor.py"
+        os.execv(sys.executable, [sys.executable, str(doctor_path)])
+
+    consent = ("--yes" in sys.argv) or ("-y" in sys.argv)
+    no_bootstrap = "--no-bootstrap" in sys.argv
+
+    if no_bootstrap and not (VENV_PY.exists() and STAMP_FILE.exists()):
+        sys.stderr.write(
+            "[render] --no-bootstrap set but the skill venv is not ready. "
+            "Run `python3 scripts/doctor.py` to see what's needed, then retry without --no-bootstrap.\n"
+        )
+        sys.exit(2)
+
+    _bootstrap_and_relaunch(consent=consent)
 
 
 # ───────────────────────────────────────────────────────────────────────
 #  From here on we're guaranteed to be running inside the venv with
-#  playwright + imageio_ffmpeg importable.
+#  playwright (+ maybe imageio_ffmpeg) importable. ffmpeg may also be
+#  on the system PATH — prefer system if present.
 # ───────────────────────────────────────────────────────────────────────
 
 from playwright.sync_api import sync_playwright   # type: ignore
-import imageio_ffmpeg                              # type: ignore
 
-FFMPEG = imageio_ffmpeg.get_ffmpeg_exe()
+def _resolve_ffmpeg() -> str:
+    """Prefer system ffmpeg; fall back to imageio-ffmpeg wheel binary."""
+    sys_path = shutil.which("ffmpeg")
+    if sys_path:
+        return sys_path
+    try:
+        import imageio_ffmpeg  # type: ignore
+        return imageio_ffmpeg.get_ffmpeg_exe()
+    except ImportError:
+        raise EnvironmentError(
+            "ffmpeg is not available. Install it system-wide (`brew install ffmpeg` / "
+            "`apt install ffmpeg` / `choco install ffmpeg`) OR rerun without "
+            "--no-bootstrap so the script can install imageio-ffmpeg."
+        )
+
+FFMPEG = _resolve_ffmpeg()
 
 
 # ───────────────────────────────────────────────────────────────────────
@@ -312,6 +394,10 @@ def main() -> int:
     ap.add_argument("--narration", type=pathlib.Path, help="MP4 only — narration audio overlay")
     ap.add_argument("--music",     type=pathlib.Path, help="MP4 only — background music (mixed at 15%%)")
     ap.add_argument("--crf", type=int, default=18, help="MP4 only — x264 quality. Default 18.")
+
+    ap.add_argument("--yes", "-y", action="store_true", help="Auto-accept first-run install prompt (default in non-TTY).")
+    ap.add_argument("--no-bootstrap", action="store_true", help="Refuse to install anything; require the cache to be ready.")
+    ap.add_argument("--doctor", action="store_true", help="Run the doctor script (preflight check) instead of rendering.")
 
     ap.add_argument("--port", type=int, default=None, help="Preview only — bind a specific port.")
     ap.add_argument("--timeout", type=int, default=None,

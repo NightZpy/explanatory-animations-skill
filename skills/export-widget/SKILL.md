@@ -5,6 +5,30 @@ description: Render an existing animation widget HTML to a preview URL or an MP4
 
 This skill drives the autonomous renderer at `../animate/scripts/render.py`. It handles BOTH preview-URL serving AND headless MP4 export. The user installs nothing — the script bootstraps a private venv with Playwright + Chromium + bundled ffmpeg (via `imageio-ffmpeg`) on first run. Subsequent runs reuse the cache (<200ms cold start).
 
+## First-time setup contract (MARKETPLACE-IMPORTANT)
+
+**Before** invoking `render.py` for the first time on a user's machine, the agent MUST:
+
+1. Run `python3 ${CLAUDE_SKILL_DIR}/../animate/scripts/doctor.py` first.
+2. Parse the JSON output — three possible statuses:
+   - `READY` → cache already present, proceed silently.
+   - `NEEDS_BOOTSTRAP` → first run. **Show the user the `bootstrap_plan` array + `download_mb`** so they know what's about to happen. Get explicit consent before invoking render.py.
+   - `BLOCKED` → the script can't fix it (Python < 3.8, no network, etc.). Show the user the blocker from `checks[*].needs_action` and stop.
+3. After consent, invoke `render.py --yes ...` so the script doesn't re-prompt.
+
+Sample agent message (NEEDS_BOOTSTRAP case):
+
+> Para exportar este widget necesito instalar Playwright + Chromium (≈175 MB)
+> en `~/.cache/explanatory-animations/`. Esto es aislado — no toca tu sistema
+> y se reusa siempre que vuelvas a exportar. Tu ffmpeg ya está instalado, así
+> que lo reuso. ¿Procedo? (la próxima vez no te pregunto, es solo la primera.)
+
+Sample agent message (READY case): silent — just proceed.
+
+Sample agent message (BLOCKED case): show the blocker, stop.
+
+`scripts/doctor.py` doubles as the user's "is this working?" check — they can run it manually anytime.
+
 ## Inputs
 
 1. **Widget path** (required) — path to the `.html` file.
