@@ -7,14 +7,7 @@
 
 > A [Claude Code](https://code.claude.com) plugin for building **polished interactive animated explanations** and **content-creator effects** in your browser — 16 patterns covering didactic visualizations (ByteByteGo-style system flows, lifecycles, algorithms, mechanical motion, LLM internals, math derivations, geographic maps, …) and creator effects (scramble text, big-number counters, shape morphing, SVG line drawing). Auto-installs, runs locally, exports to MP4 with one command.
 
-<!-- ─── HERO DEMO ─────────────────────────────────────────────────────────
-TODO: drop a 8-12 second hero GIF here showing the full agent flow:
-  user prompt → Claude runs discovery → widget appears → MP4 is delivered.
-Suggested aspect: 16:9 or 21:9. File: docs/hero.gif (or .mp4 if GitHub
-markdown supports it — it does, via HTML5 <video>).
-────────────────────────────────────────────────────────────────────────-->
-
-<!-- ![hero demo](docs/hero.gif) -->
+![hero demo][hero-demo]
 
 ---
 
@@ -29,27 +22,15 @@ Ask Claude in plain English (or Spanish) to animate something — a system archi
 
 The plugin runs the **5-step discovery protocol** before generating anything — confirming topic, pattern, palette/typography/icons, complexity, and export needs — so the output matches what you actually wanted. Works in any language.
 
-<!-- ─── PATTERN GALLERY (4 quadrants) ─────────────────────────────────────
-TODO: a 2×2 grid of GIFs showing one pattern per family. Suggested:
-  · A (lifecycle) — top-left
-  · B (system flow) — top-right
-  · M (text scramble) — bottom-left
-  · P (sound wave) — bottom-right
-Place under docs/gallery/{A,B,M,P}.gif
-────────────────────────────────────────────────────────────────────────-->
+### Pattern gallery
 
-<!--
-<table>
-<tr>
-  <td><img src="docs/gallery/A.gif" alt="Pattern A — Lifecycle"/></td>
-  <td><img src="docs/gallery/B.gif" alt="Pattern B — System flow"/></td>
-</tr>
-<tr>
-  <td><img src="docs/gallery/M.gif" alt="Pattern M — Text scramble"/></td>
-  <td><img src="docs/gallery/P.gif" alt="Pattern P — Sound wave"/></td>
-</tr>
-</table>
--->
+| Pattern A — Lifecycle | Pattern B — System flow |
+|---|---|
+| ![Pattern A][pattern-a] | ![Pattern B][pattern-b] |
+| Pattern M — Text scramble | Pattern P — Sound wave |
+| ![Pattern M][pattern-m] | ![Pattern P][pattern-p] |
+
+📺 **Full walkthrough video:** [Watch on YouTube][demo-video]
 
 ## Install
 
@@ -93,14 +74,9 @@ Or just describe what you want — the plugin auto-invokes based on semantic int
 
 ## How it works in one minute
 
-<!-- ─── INTERACTION FLOW DIAGRAM ──────────────────────────────────────────
-TODO: a screenshot or rough sketch of the agent <-> user back-and-forth.
-Place at docs/flow-diagram.png (a quick sketch or screenshot is fine).
-────────────────────────────────────────────────────────────────────────-->
+![interaction flow][flow-diagram]
 
-<!-- ![interaction flow](docs/flow-diagram.png) -->
-
-1. **You ask** — "animate how a request flows through our CDN" / "make me a scramble-text intro for a reel" / "show the OSI 7 layers as a stack" / "explica con animación el sistema solar".
+1. **You ask** — *"animate how a request flows through our CDN"* / *"make me a scramble-text intro for a reel"* / *"show the OSI 7 layers as a stack"* / *"explica con animación el sistema solar"*.
 2. **Claude runs the 5-step discovery protocol** — confirms topic, recommends a pattern, asks about palette / typography / icons / aspect ratio / export.
 3. **Claude generates an HTML widget** — self-contained, no build step, loads [Anime.js v4](https://animejs.com) from `esm.sh` + Google Fonts.
 4. **Claude delivers the result** — either a `localhost` URL it opens in your browser, or an MP4 file in `/tmp/`. The agent invokes `scripts/render.py` which auto-bootstraps Playwright + Chromium + ffmpeg in `~/.cache/explanatory-animations/` on the first run only (with explicit consent + a transparent breakdown of what's about to download).
@@ -149,6 +125,8 @@ Every pattern shares one visual language:
 
 ## Export pipeline (6 strategies)
 
+![export button demo][export-demo]
+
 Full details in [`skills/animate/library/export.md`](skills/animate/library/export.md). Quick chooser:
 
 | You want… | Strategy |
@@ -159,14 +137,6 @@ Full details in [`skills/animate/library/export.md`](skills/animate/library/expo
 | Hand-rolled in-browser recording with custom timing | **3 — CCapture.js (raw)** |
 | Custom Node + Puppeteer CI pipeline | **4 — Puppeteer headless** |
 | **Studio with live preview + Render button + props panel + Lambda batch** | **5 — Remotion** (`scripts/export-remotion/`) |
-
-<!-- ─── EXPORT BUTTON DEMO ────────────────────────────────────────────────
-TODO: 8-second GIF showing the user clicking the ⬇ Export button, picking
-options, watching the progress bar, and the WebM landing in Downloads/.
-File: docs/export-button.gif
-────────────────────────────────────────────────────────────────────────-->
-
-<!-- ![export button demo](docs/export-button.gif) -->
 
 ## First-time setup (what the plugin downloads)
 
@@ -205,12 +175,7 @@ Six standalone reference implementations under [`skills/animate/examples/`](skil
 | `shape-drift.html` | O | Layered SVG shapes with randomized keyframes — generative background |
 | `sound-wave.html` | P | 80 vertical lines + 40 concentric circles drawing themselves — sonar / radio visualizer |
 
-<!-- ─── EXAMPLES VIDEO ──────────────────────────────────────────────────
-TODO: a 30-60 second video walking through each of the 6 examples at 1x speed.
-Or YouTube link if you upload it.
-─────────────────────────────────────────────────────────────────────────-->
-
-<!-- [![Examples walkthrough](docs/examples-thumb.png)](https://youtu.be/REPLACE) -->
+📺 **Examples walkthrough video:** [Watch on YouTube][examples-video]
 
 ## FAQ
 
@@ -263,3 +228,22 @@ MIT. See [LICENSE](LICENSE).
 ## Credits
 
 Built on top of [Anime.js v4](https://animejs.com) (Julian Garnier, MIT), [Playwright](https://playwright.dev) (Microsoft, Apache 2.0), [html2canvas](https://html2canvas.hertzen.com) (Niklas von Hertzen, MIT), [CCapture.js](https://github.com/spite/ccapture.js) (Jaume Sánchez, MIT), [Remotion](https://www.remotion.dev) (Remotion GmbH, custom EULA), and [imageio-ffmpeg](https://github.com/imageio/imageio-ffmpeg) (LGPL ffmpeg build).
+
+<!--
+─────────────────────────────────────────────────────────────────────────────
+ VISUAL ASSETS — replace the paths/URLs below with your real ones.
+ Until each file exists, GitHub shows the alt text + a broken-image icon.
+ Suggested sources:
+   · Record GIFs locally → drop in docs/ → commit
+   · Upload videos to YouTube → replace the placeholder URLs below
+─────────────────────────────────────────────────────────────────────────────
+-->
+[hero-demo]:      docs/hero.gif                     "Replace with 8–12s hero GIF (16:9 or 21:9): full agent flow user→discovery→widget→MP4"
+[pattern-a]:      docs/gallery/A.gif                "Replace with 4–6s loop of Pattern A reference example"
+[pattern-b]:      docs/gallery/B.gif                "Replace with 4–6s loop of Pattern B reference example"
+[pattern-m]:      docs/gallery/M.gif                "Replace with 4–6s loop of Pattern M reference example"
+[pattern-p]:      docs/gallery/P.gif                "Replace with 4–6s loop of Pattern P reference example"
+[flow-diagram]:   docs/flow-diagram.png             "Replace with sketch / screenshot of the agent ↔ user back-and-forth"
+[export-demo]:    docs/export-button.gif            "Replace with 8s GIF: click ⬇ Export → modal → progress → WebM download"
+[demo-video]:     https://youtu.be/REPLACE_ME_HERO  "Replace with full walkthrough YouTube URL"
+[examples-video]: https://youtu.be/REPLACE_ME_EXAMPLES  "Replace with 30–60s YouTube URL of the 6 reference examples"
