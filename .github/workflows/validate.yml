@@ -1,0 +1,115 @@
+name: validate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch: {}
+
+jobs:
+  validate-plugin:
+    name: Plugin structure + smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Validate plugin.json
+        run: |
+          python3 - <<'EOF'
+          import json, sys, pathlib
+          p = pathlib.Path(".claude-plugin/plugin.json")
+          assert p.exists(), "missing .claude-plugin/plugin.json"
+          data = json.loads(p.read_text())
+          required = ["name", "description", "version"]
+          missing = [k for k in required if k not in data]
+          assert not missing, f"plugin.json missing required keys: {missing}"
+          # name format check
+          import re
+          assert re.fullmatch(r"[a-z0-9][a-z0-9-]*", data["name"]), f"name must be lowercase + hyphens: {data['name']!r}"
+          # version check
+          assert re.fullmatch(r"\d+\.\d+\.\d+", data["version"]), f"version must be semver MAJOR.MINOR.PATCH: {data['version']!r}"
+          print(f"OK plugin.json — name={data['name']} version={data['version']}")
+          EOF
+
+      - name: Validate skill structure
+        run: |
+          python3 - <<'EOF'
+          import pathlib, re, sys
+          skills_root = pathlib.Path("skills")
+          assert skills_root.is_dir(), "missing skills/ directory"
+          errors = []
+          for skill_dir in sorted(skills_root.iterdir()):
+              if not skill_dir.is_dir(): continue
+              skill_md = skill_dir / "SKILL.md"
+              if not skill_md.exists():
+                  errors.append(f"{skill_dir.name}: missing SKILL.md")
+                  continue
+              content = skill_md.read_text()
+              if not content.startswith("---"):
+                  errors.append(f"{skill_dir.name}: SKILL.md missing YAML frontmatter")
+                  continue
+              # Parse frontmatter
+              end = content.find("---", 3)
+              if end == -1:
+                  errors.append(f"{skill_dir.name}: SKILL.md frontmatter not closed with ---")
+                  continue
+              fm = content[3:end]
+              if "name:" not in fm:
+                  errors.append(f"{skill_dir.name}: SKILL.md frontmatter missing 'name:'")
+              if "description:" not in fm:
+                  errors.append(f"{skill_dir.name}: SKILL.md frontmatter missing 'description:'")
+              # Name in frontmatter must match folder name
+              m = re.search(r"^name:\s*(\S+)", fm, re.MULTILINE)
+              if m and m.group(1).strip() != skill_dir.name:
+                  errors.append(f"{skill_dir.name}: SKILL.md name '{m.group(1)}' != folder '{skill_dir.name}'")
+              print(f"OK skill — {skill_dir.name}")
+          if errors:
+              print("\nFAIL:")
+              for e in errors: print(f"  - {e}")
+              sys.exit(1)
+          EOF
+
+      - name: Lint pattern docs
+        run: |
+          python3 - <<'EOF'
+          import pathlib, re, sys
+          patterns_dir = pathlib.Path("skills/animate/patterns")
+          if not patterns_dir.exists():
+              sys.exit(0)  # no patterns, skip
+          required_sections = ["## Use when", "## Inputs", "## Pitfalls"]
+          errors = []
+          for p in sorted(patterns_dir.glob("*.md")):
+              if p.name.startswith("_"): continue  # index / mistakes
+              text = p.read_text()
+              for sec in required_sections:
+                  if sec not in text:
+                      errors.append(f"{p.name}: missing section '{sec}'")
+              print(f"OK pattern — {p.name}")
+          if errors:
+              print("\nWARN (non-blocking):")
+              for e in errors: print(f"  - {e}")
+          EOF
+
+      - name: Smoke-test render.py doctor
+        run: |
+          python3 skills/animate/scripts/doctor.py | python3 -c "
+          import json, sys
+          report = json.load(sys.stdin)
+          assert 'status' in report, 'doctor.py output missing status'
+          assert report['status'] in ('READY', 'NEEDS_BOOTSTRAP', 'BLOCKED')
+          print(f\"doctor.py OK — status={report['status']}\")
+          "
+
+  validate-shell-scripts:
+    name: Shellcheck (smoke test wrappers)
+    runs-on: ubuntu-latest
+    if: false   # Skip until shell wrappers exist
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ludeeus/action-shellcheck@master
