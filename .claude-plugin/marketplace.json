@@ -1,0 +1,35 @@
+{
+  "name": "nightzpy-plugins",
+  "owner": {
+    "name": "NightZpy",
+    "url": "https://github.com/NightZpy"
+  },
+  "description": "Single-plugin marketplace hosting the explanatory-animations Claude Code plugin. Add this marketplace to install the plugin via /plugin install.",
+  "version": "0.4.0",
+  "plugins": [
+    {
+      "name": "explanatory-animations",
+      "source": ".",
+      "description": "Build polished interactive animated explanations and content-creator effects from natural-language prompts. 16 patterns (lifecycles, system flows, algorithms, mechanical motion, orbits, particles, LLM internals, math, geographic maps, cross-sections, timelines, text effects, counters, shape morph, line drawing). Self-contained HTML widgets (Anime.js v4), in-browser Export button, autonomous MP4 renderer, optional Remotion Studio.",
+      "version": "0.4.0",
+      "author": {
+        "name": "NightZpy"
+      },
+      "homepage": "https://github.com/NightZpy/explanatory-animations-skill",
+      "repository": {
+        "type": "git",
+        "url": "https://github.com/NightZpy/explanatory-animations-skill"
+      },
+      "license": "MIT",
+      "category": "creative",
+      "tags": [
+        "animation",
+        "bytebytego",
+        "anime.js",
+        "explainer",
+        "content-creator",
+        "video-export"
+      ]
+    }
+  ]
+}

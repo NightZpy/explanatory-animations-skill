@@ -22,19 +22,42 @@ jobs:
       - name: Validate plugin.json
         run: |
           python3 - <<'EOF'
-          import json, sys, pathlib
+          import json, sys, pathlib, re
           p = pathlib.Path(".claude-plugin/plugin.json")
           assert p.exists(), "missing .claude-plugin/plugin.json"
           data = json.loads(p.read_text())
           required = ["name", "description", "version"]
           missing = [k for k in required if k not in data]
           assert not missing, f"plugin.json missing required keys: {missing}"
-          # name format check
-          import re
           assert re.fullmatch(r"[a-z0-9][a-z0-9-]*", data["name"]), f"name must be lowercase + hyphens: {data['name']!r}"
-          # version check
           assert re.fullmatch(r"\d+\.\d+\.\d+", data["version"]), f"version must be semver MAJOR.MINOR.PATCH: {data['version']!r}"
           print(f"OK plugin.json — name={data['name']} version={data['version']}")
+          EOF
+
+      - name: Validate marketplace.json
+        run: |
+          python3 - <<'EOF'
+          import json, sys, pathlib, re
+          mp = pathlib.Path(".claude-plugin/marketplace.json")
+          if not mp.exists():
+              print("SKIP marketplace.json (not present)")
+              sys.exit(0)
+          data = json.loads(mp.read_text())
+          for k in ("name", "owner", "plugins"):
+              assert k in data, f"marketplace.json missing required key: {k!r}"
+          assert isinstance(data["plugins"], list) and data["plugins"], "marketplace.json plugins must be a non-empty list"
+          for plugin in data["plugins"]:
+              assert "name" in plugin and "source" in plugin, f"plugin entry missing required fields: {plugin}"
+          # name format
+          assert re.fullmatch(r"[a-z0-9][a-z0-9-]*", data["name"]), f"marketplace name must be lowercase + hyphens: {data['name']!r}"
+          # reserved name check
+          reserved = {"claude-code-marketplace","claude-code-plugins","claude-plugins-official","anthropic-marketplace","anthropic-plugins","agent-skills","anthropic-agent-skills","knowledge-work-plugins","life-sciences","claude-for-legal","claude-for-financial-services","financial-services-plugins"}
+          assert data["name"] not in reserved, f"marketplace name {data['name']!r} is reserved by Anthropic"
+          # plugin name in marketplace must match plugin.json name
+          pj = json.loads(pathlib.Path(".claude-plugin/plugin.json").read_text())
+          marketplace_plugin_names = [p["name"] for p in data["plugins"]]
+          assert pj["name"] in marketplace_plugin_names, f"plugin.json name {pj['name']!r} not listed in marketplace.json"
+          print(f"OK marketplace.json — name={data['name']} plugins={marketplace_plugin_names}")
           EOF
 
       - name: Validate skill structure

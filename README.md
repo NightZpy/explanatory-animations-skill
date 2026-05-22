@@ -60,6 +60,39 @@ cd explanatory-animations-skill
 claude --plugin-dir .
 ```
 
+### D · Local marketplace (best for testing the full install flow)
+
+The repo ships a `.claude-plugin/marketplace.json`, so the same clone doubles as a single-plugin marketplace. Use this to exercise the exact `/plugin install` pipeline before submitting to a public marketplace:
+
+```bash
+git clone https://github.com/NightZpy/explanatory-animations-skill.git
+cd explanatory-animations-skill
+claude
+```
+
+Inside Claude Code:
+
+```
+/plugin marketplace add .
+/plugin install explanatory-animations@nightzpy-plugins
+/plugin                          # verify the plugin appears installed
+```
+
+After pulling new commits:
+
+```
+/plugin marketplace update nightzpy-plugins
+```
+
+Remove:
+
+```
+/plugin uninstall explanatory-animations
+/plugin marketplace remove nightzpy-plugins
+```
+
+This is the cleanest way to **verify the plugin structure is correct** — Claude Code copies the plugin to its cache and runs the same loader Anthropic's review uses.
+
 After install, the plugin exposes 5 namespaced skills under `/`:
 
 ```
