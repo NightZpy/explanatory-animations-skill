@@ -121,27 +121,27 @@ Or just describe what you want — the plugin auto-invokes based on semantic int
 
 | Code | Pattern | Best for | Doc |
 |---|---|---|---|
-| **A** | Lifecycle / state machine | Job lifecycle, order status, ticket state | [doc](skills/animate/patterns/A-lifecycle.md) |
-| **B** | System flow (ByteByteGo) | Request through layered subsystems | [doc](skills/animate/patterns/B-system-flow.md) |
-| **C** | Cursor over data structure | Sorting / search / traversal algorithms | [doc](skills/animate/patterns/C-algorithm-cursor.md) |
-| **D** | Side-by-side comparison | A vs B (with/without cache, monolith vs micro) | [doc](skills/animate/patterns/D-comparison.md) |
-| **E** | Term-by-term math reveal | Formula derived stepwise | [doc](skills/animate/patterns/E-math-reveal.md) |
-| **F** | Mechanical / kinematic | Engines, gears, pendulum | [doc](skills/animate/patterns/F-mechanical.md) |
-| **G** | Orbital / celestial | Solar system, atoms | [doc](skills/animate/patterns/G-orbital.md) |
-| **H** | Particle flow | Data flow, traffic, electrons | [doc](skills/animate/patterns/H-particle-flow.md) |
-| **I** | Layered transformation | LLM internals, neural net, compiler stages | [doc](skills/animate/patterns/I-layered-transform.md) |
-| **J** | Geographic map | Regional flows, supply chain | [doc](skills/animate/patterns/J-geographic-map.md) |
-| **K** | Cross-section / stack | OSI 7 layers, memory hierarchy, strata | [doc](skills/animate/patterns/K-cross-section.md) |
-| **L** | Timeline / sequence | TLS handshake, OAuth, signal timing | [doc](skills/animate/patterns/L-timeline.md) |
+| **A** | Lifecycle / state machine | Job lifecycle, order status, ticket state | [doc](plugin/skills/animate/patterns/A-lifecycle.md) |
+| **B** | System flow (ByteByteGo) | Request through layered subsystems | [doc](plugin/skills/animate/patterns/B-system-flow.md) |
+| **C** | Cursor over data structure | Sorting / search / traversal algorithms | [doc](plugin/skills/animate/patterns/C-algorithm-cursor.md) |
+| **D** | Side-by-side comparison | A vs B (with/without cache, monolith vs micro) | [doc](plugin/skills/animate/patterns/D-comparison.md) |
+| **E** | Term-by-term math reveal | Formula derived stepwise | [doc](plugin/skills/animate/patterns/E-math-reveal.md) |
+| **F** | Mechanical / kinematic | Engines, gears, pendulum | [doc](plugin/skills/animate/patterns/F-mechanical.md) |
+| **G** | Orbital / celestial | Solar system, atoms | [doc](plugin/skills/animate/patterns/G-orbital.md) |
+| **H** | Particle flow | Data flow, traffic, electrons | [doc](plugin/skills/animate/patterns/H-particle-flow.md) |
+| **I** | Layered transformation | LLM internals, neural net, compiler stages | [doc](plugin/skills/animate/patterns/I-layered-transform.md) |
+| **J** | Geographic map | Regional flows, supply chain | [doc](plugin/skills/animate/patterns/J-geographic-map.md) |
+| **K** | Cross-section / stack | OSI 7 layers, memory hierarchy, strata | [doc](plugin/skills/animate/patterns/K-cross-section.md) |
+| **L** | Timeline / sequence | TLS handshake, OAuth, signal timing | [doc](plugin/skills/animate/patterns/L-timeline.md) |
 
 **Family 2 — Content creator (capture attention)**
 
 | Code | Pattern | Best for | Doc |
 |---|---|---|---|
-| **M** | Text effects | Reel intros, scramble headlines, magnet on hover, CTA reveal | [doc](skills/animate/patterns/M-text-effects.md) |
-| **N** | Numeric counter / clock | 10K / $1M / 50K star reveal, flip-digit clock, KPI dashboard | [doc](skills/animate/patterns/N-counter.md) |
-| **O** | Shape morph / layered transforms | Generative loops, podcast intros, ambient backgrounds | [doc](skills/animate/patterns/O-shape-morph.md) |
-| **P** | SVG line drawing | Sound waves, sonar pings, logo reveal, route trace | [doc](skills/animate/patterns/P-svg-line-drawing.md) |
+| **M** | Text effects | Reel intros, scramble headlines, magnet on hover, CTA reveal | [doc](plugin/skills/animate/patterns/M-text-effects.md) |
+| **N** | Numeric counter / clock | 10K / $1M / 50K star reveal, flip-digit clock, KPI dashboard | [doc](plugin/skills/animate/patterns/N-counter.md) |
+| **O** | Shape morph / layered transforms | Generative loops, podcast intros, ambient backgrounds | [doc](plugin/skills/animate/patterns/O-shape-morph.md) |
+| **P** | SVG line drawing | Sound waves, sonar pings, logo reveal, route trace | [doc](plugin/skills/animate/patterns/P-svg-line-drawing.md) |
 
 Tie-breaker order: **L → A → B → I → K → F → G → H → J → C → D → E**.
 
@@ -149,18 +149,18 @@ Tie-breaker order: **L → A → B → I → K → F → G → H → J → C →
 
 Every pattern shares one visual language:
 
-- **Palette** — 3 presets (Voltage / Editorial / Neon dark) + brand-aligned option. See [`library/colors.md`](skills/animate/library/colors.md).
-- **Typography** — 3 pairings (Geist+Geist Mono / Fraunces+JetBrains Mono / Space Grotesk+IBM Plex Mono) — never Arial / Inter / Roboto. See [`library/typography.md`](skills/animate/library/typography.md).
-- **Iconography** — emoji (default) / Lucide / custom SVG / user-provided assets. See [`library/icons.md`](skills/animate/library/icons.md).
-- **Controls strip** — Play / Pause / Restart / Speed pill / optional Path selector / Status indicator. See [`library/controls.md`](skills/animate/library/controls.md).
-- **Timing reference** — duration + easing per pattern. See [`library/timing.md`](skills/animate/library/timing.md).
+- **Palette** — 3 presets (Voltage / Editorial / Neon dark) + brand-aligned option. See [`library/colors.md`](plugin/skills/animate/library/colors.md).
+- **Typography** — 3 pairings (Geist+Geist Mono / Fraunces+JetBrains Mono / Space Grotesk+IBM Plex Mono) — never Arial / Inter / Roboto. See [`library/typography.md`](plugin/skills/animate/library/typography.md).
+- **Iconography** — emoji (default) / Lucide / custom SVG / user-provided assets. See [`library/icons.md`](plugin/skills/animate/library/icons.md).
+- **Controls strip** — Play / Pause / Restart / Speed pill / optional Path selector / Status indicator. See [`library/controls.md`](plugin/skills/animate/library/controls.md).
+- **Timing reference** — duration + easing per pattern. See [`library/timing.md`](plugin/skills/animate/library/timing.md).
 - **Accessibility** — `prefers-reduced-motion`, keyboard nav, screen-reader roles, mobile ≤720px graceful degrade.
 
 ## Export pipeline (6 strategies)
 
 ![export button demo][export-demo]
 
-Full details in [`skills/animate/library/export.md`](skills/animate/library/export.md). Quick chooser:
+Full details in [`plugin/skills/animate/library/export.md`](plugin/skills/animate/library/export.md). Quick chooser:
 
 | You want… | Strategy |
 |---|---|
@@ -189,7 +189,7 @@ Continúo? (la próxima vez ya no te pregunto)
 Run the doctor manually any time:
 
 ```bash
-python3 ~/.claude/plugins/explanatory-animations/skills/animate/scripts/doctor.py
+python3 ~/.claude/plugins/explanatory-animations/plugin/skills/animate/scripts/doctor.py
 # → JSON report on stdout, human summary on stderr
 ```
 
@@ -197,7 +197,7 @@ The cache lives at `~/.cache/explanatory-animations/`. To uninstall, delete that
 
 ## Examples
 
-Six standalone reference implementations under [`skills/animate/examples/`](skills/animate/examples/). Open any `.html` file directly in a browser — no build step.
+Six standalone reference implementations under [`plugin/skills/animate/examples/`](plugin/skills/animate/examples/). Open any `.html` file directly in a browser — no build step.
 
 | File | Pattern | What it demos |
 |---|---|---|

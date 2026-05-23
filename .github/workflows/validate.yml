@@ -23,8 +23,8 @@ jobs:
         run: |
           python3 - <<'EOF'
           import json, sys, pathlib, re
-          p = pathlib.Path(".claude-plugin/plugin.json")
-          assert p.exists(), "missing .claude-plugin/plugin.json"
+          p = pathlib.Path("plugin/.claude-plugin/plugin.json")
+          assert p.exists(), "missing plugin/.claude-plugin/plugin.json"
           data = json.loads(p.read_text())
           required = ["name", "description", "version"]
           missing = [k for k in required if k not in data]
@@ -54,7 +54,7 @@ jobs:
           reserved = {"claude-code-marketplace","claude-code-plugins","claude-plugins-official","anthropic-marketplace","anthropic-plugins","agent-skills","anthropic-agent-skills","knowledge-work-plugins","life-sciences","claude-for-legal","claude-for-financial-services","financial-services-plugins"}
           assert data["name"] not in reserved, f"marketplace name {data['name']!r} is reserved by Anthropic"
           # plugin name in marketplace must match plugin.json name
-          pj = json.loads(pathlib.Path(".claude-plugin/plugin.json").read_text())
+          pj = json.loads(pathlib.Path("plugin/.claude-plugin/plugin.json").read_text())
           marketplace_plugin_names = [p["name"] for p in data["plugins"]]
           assert pj["name"] in marketplace_plugin_names, f"plugin.json name {pj['name']!r} not listed in marketplace.json"
           print(f"OK marketplace.json — name={data['name']} plugins={marketplace_plugin_names}")
@@ -64,7 +64,7 @@ jobs:
         run: |
           python3 - <<'EOF'
           import pathlib, re, sys
-          skills_root = pathlib.Path("skills")
+          skills_root = pathlib.Path("plugin/skills")
           assert skills_root.is_dir(), "missing skills/ directory"
           errors = []
           for skill_dir in sorted(skills_root.iterdir()):
@@ -102,7 +102,7 @@ jobs:
         run: |
           python3 - <<'EOF'
           import pathlib, re, sys
-          patterns_dir = pathlib.Path("skills/animate/patterns")
+          patterns_dir = pathlib.Path("plugin/skills/animate/patterns")
           if not patterns_dir.exists():
               sys.exit(0)  # no patterns, skip
           required_sections = ["## Use when", "## Inputs", "## Pitfalls"]
@@ -121,7 +121,7 @@ jobs:
 
       - name: Smoke-test render.py doctor
         run: |
-          python3 skills/animate/scripts/doctor.py | python3 -c "
+          python3 plugin/skills/animate/scripts/doctor.py | python3 -c "
           import json, sys
           report = json.load(sys.stdin)
           assert 'status' in report, 'doctor.py output missing status'

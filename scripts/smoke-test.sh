@@ -21,25 +21,25 @@ set -euo pipefail
 REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 OUT_DIR="$(mktemp -d)"
 OUT_MP4="$OUT_DIR/smoke.mp4"
-WIDGET="$REPO_ROOT/skills/animate/examples/lifecycle.html"
+WIDGET="$REPO_ROOT/plugin/skills/animate/examples/lifecycle.html"
 
 echo "▶ smoke-test  ($REPO_ROOT)"
 
 # 1. Structure check
 [[ -f "$REPO_ROOT/.claude-plugin/plugin.json" ]] || { echo "FAIL: missing .claude-plugin/plugin.json"; exit 1; }
-[[ -f "$REPO_ROOT/skills/animate/SKILL.md"     ]] || { echo "FAIL: missing skills/animate/SKILL.md"; exit 1; }
+[[ -f "$REPO_ROOT/plugin/skills/animate/SKILL.md"     ]] || { echo "FAIL: missing plugin/skills/animate/SKILL.md"; exit 1; }
 [[ -f "$WIDGET" ]]                                || { echo "FAIL: missing example widget at $WIDGET"; exit 1; }
 echo "✓ structure"
 
 # 2. Doctor
-DOCTOR_OUT="$(python3 "$REPO_ROOT/skills/animate/scripts/doctor.py" 2>/dev/null)" || true
+DOCTOR_OUT="$(python3 "$REPO_ROOT/plugin/skills/animate/scripts/doctor.py" 2>/dev/null)" || true
 STATUS="$(echo "$DOCTOR_OUT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])')"
 echo "✓ doctor → status=$STATUS"
 [[ "$STATUS" != "BLOCKED" ]] || { echo "FAIL: doctor reports BLOCKED — inspect:"; echo "$DOCTOR_OUT"; exit 2; }
 
 # 3. Render
 echo "▶ render.py → $OUT_MP4 (this triggers bootstrap on first run)"
-python3 "$REPO_ROOT/skills/animate/scripts/render.py" \
+python3 "$REPO_ROOT/plugin/skills/animate/scripts/render.py" \
     --widget "$WIDGET" \
     --out "$OUT_MP4" \
     --resolution 1280x720 \

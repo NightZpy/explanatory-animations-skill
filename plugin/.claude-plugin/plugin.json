@@ -6,10 +6,7 @@
     "name": "NightZpy"
   },
   "homepage": "https://github.com/NightZpy/explanatory-animations-skill",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/NightZpy/explanatory-animations-skill"
-  },
+  "repository": "https://github.com/NightZpy/explanatory-animations-skill",
   "license": "MIT",
   "keywords": [
     "animation",
