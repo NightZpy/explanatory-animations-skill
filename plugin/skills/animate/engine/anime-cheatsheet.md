@@ -133,6 +133,92 @@ const tl = createTimeline({ ... });
 tl.speed = 0.5;     // affects just this timeline
 ```
 
+## Common v4 pitfalls (the ones that silently break widgets)
+
+### Delay-only `.add()` does NOT exist
+
+In v3 you could `tl.add({ duration: 1000 })` as a pure delay. **In v4 this silently does nothing useful** — the first argument is always a target. Trying to use it as a delay anchor makes the timeline appear ~3× faster than designed.
+
+```js
+// ❌ BAD — Anime.js treats {duration: 1000} as a target object, animates nothing.
+tl.add({ duration: 1000 }, {}, "+=0")
+  .call(() => doSomething());
+
+// ✅ GOOD — use a label with offset
+tl.label("hold-" + i, "+=1000")
+  .call(() => doSomething(), "hold-" + i);
+
+// ✅ ALSO GOOD — push the offset into the next .add()
+tl.add(target, { ...params }, "+=1000");
+```
+
+### Pre-set transforms in CSS conflict with `animate(...)` transforms
+
+If you write `.box { transform: scale(0.9); }` in CSS and then animate the same target with `animate('.box', { translateY: [6, 0] })`, **Anime.js takes over the transform property entirely and the initial `scale(0.9)` is discarded** the moment the animation starts. The element jumps to `scale: 1` at frame 0.
+
+```js
+// ❌ BAD — CSS has `transform: scale(0.9)`, then this is the first animation:
+animate('.token', { translateY: [6, 0], duration: 350 });
+// Next animation:
+animate('.token', { scale: [0.9, 1.06, 1] });   // tries to scale-pop but starts from 1, not 0.9 → jumpy
+
+// ✅ GOOD — set the initial state with utils.set(), then animate.
+utils.set('.token', { opacity: 0, translateY: 6, scale: 0.9 });
+animate('.token', { opacity: 1, translateY: 0, scale: [0.9, 1.06, 1], duration: 520 });
+```
+
+Rule: **never set transforms in CSS for elements Anime.js will animate**. Use `utils.set()` instead.
+
+### Initial `opacity: 0` on classes that get re-used
+
+If `.token-pill { opacity: 0; }` is used both for tokens (animated in by the timeline) AND for displaying static strings (NOT in the timeline's animated-targets selector), the static instances stay invisible forever.
+
+```js
+// ❌ BAD — selector misses the rawtext usage:
+const animated = layer.querySelectorAll('.vector-block, .matrix, .heads');
+//                                       ^^^^^^^^^^^ no .token-pill, but rawtext step uses .token-pill
+
+// ✅ GOOD — either:
+//   (a) Include every class that has initial opacity:0 in the selector, OR
+//   (b) Remove the CSS opacity:0 and use opacity: [0, 1] from inside the animation
+//   (c) Use a different class for non-animated text (e.g. `.raw-string`)
+```
+
+### `kind` switch in viz selector must cover every viz-kind
+
+When the timeline animates per-step depending on `step.viz.kind`, a missing case leaves that step's visualization unanimated:
+
+```js
+// ❌ BAD — "residual" cells stay at scaleY: 0.2 because the kind isn't covered:
+if (kind === "vectors" || kind === "qkv") {
+  tl.add(cells, { scaleY: [0.2, 1], ... });
+}
+
+// ✅ GOOD — list every kind that uses .cell:
+if (["vectors", "qkv", "residual"].includes(kind)) {
+  tl.add(cells, { scaleY: [0.2, 1], ... });
+}
+```
+
+### Restart should NOT rebuild the DOM
+
+Rebuilding the DOM on every Restart click leaks animation instances (their targets get detached but `animate.engine` still ticks them) and is slow.
+
+```js
+// ❌ BAD — every restart wipes innerHTML and re-renders.
+function restart() { rebuild(); play(); }
+
+// ✅ GOOD — only rebuild when the path actually changes.
+function restart() {
+  timeline.pause();
+  timeline.seek(0);
+  utils.set('.layer', { opacity: 1 });
+  utils.set('.layer.active', {}, { remove: 'class' });   // or use classList.remove on each
+  timeline.play();
+}
+function onPathChange() { rebuild(); }
+```
+
 ## text.split() — the v4 killer feature
 
 Split any text into lines / words / chars with full control over wrapping, cloning, accessibility.

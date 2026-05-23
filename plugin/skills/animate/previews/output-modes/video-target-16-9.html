@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Output mode preview · Video-target 16:9 (1920×1080, fixed frame)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:#fafaf7; --card:#fff; --ink:#09090b; --ink-2:#3f3f46; --ink-3:#71717a;
+    --border:#e7e5e4; --border-2:#d4d4d8;
+    --accent:#eab308; --accent-bg:#fef3c7; --accent-ink:#713f12; --accent-glow:rgba(234,179,8,.45);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:#0a0a0c; color:var(--ink);
+    font-family:'Geist',ui-sans-serif,system-ui,sans-serif; overflow:hidden; }
+  .chrome {
+    position:fixed; inset:0; display:flex; flex-direction:column; padding:24px;
+    align-items:center; justify-content:center; gap:14px;
+  }
+  .topbar {
+    width:100%; max-width:1200px; display:flex; justify-content:space-between; align-items:center;
+    font-family:'Geist Mono',monospace; font-size:11px; color:#a1a1aa;
+  }
+  .tag {
+    color:#0a0a0c; background:#eab308; padding:4px 10px; border-radius:6px;
+    text-transform:uppercase; letter-spacing:.1em; font-weight:600;
+  }
+  .stage-wrap {
+    position:relative; width:100%; max-width:1200px; aspect-ratio:16/9;
+    background:var(--paper); border-radius:12px;
+    box-shadow: 0 30px 80px rgba(0,0,0,.5);
+    overflow:hidden;
+  }
+  .stage {
+    /* Logical coordinate system is 1920x1080; scaled to fit. */
+    position:absolute; top:0; left:0;
+    width:1920px; height:1080px;
+    transform-origin: top left;
+  }
+  .stage-inner { width:100%; height:100%; display:grid;
+    grid-template-columns: 360px 1fr; gap:32px; padding:48px 56px; }
+
+  .overview {
+    background:var(--card); border:1px solid var(--border); border-radius:18px;
+    padding:36px 28px; display:flex; flex-direction:column; gap:14px;
+  }
+  .overview h2 {
+    margin:0 0 12px; font-size:20px; font-weight:600; color:var(--ink-2);
+    font-family:'Geist Mono',monospace; text-transform:uppercase; letter-spacing:.12em;
+  }
+  .layer-list { list-style:none; padding:0; margin:0; display:flex; flex-direction:column; gap:8px; position:relative; }
+  .layer-list::before {
+    content:""; position:absolute; left:14px; top:14px; bottom:14px;
+    width:2px; background:var(--border-2);
+  }
+  .layer-item {
+    display:flex; align-items:center; gap:14px; padding:8px 4px;
+    font-size:20px; color:var(--ink-3); transition: color 320ms, transform 320ms;
+  }
+  .layer-item .dot { width:28px; height:28px; border-radius:50%; background:var(--paper);
+    border:2px solid var(--border-2); flex:0 0 28px; transition: background 320ms, border-color 320ms, transform 320ms;
+    position:relative; z-index:1; }
+  .layer-item.active { color:var(--ink); transform:translateX(2px); font-weight:600; }
+  .layer-item.active .dot { background:var(--accent); border-color:var(--accent); transform:scale(1.18); }
+
+  .focal {
+    background:var(--card); border:1px solid var(--border); border-radius:18px;
+    padding:48px 56px; display:flex; flex-direction:column; gap:24px;
+    position:relative; overflow:hidden;
+  }
+  .focal-head {
+    font-family:'Geist Mono',monospace; font-size:18px; color:var(--accent-ink);
+    background:var(--accent-bg); border:1px solid var(--accent); padding:6px 16px;
+    border-radius:8px; align-self:flex-start; letter-spacing:.06em; text-transform:uppercase;
+  }
+  .focal-title { font-size:64px; font-weight:600; letter-spacing:-0.02em; margin:0; line-height:1.05; }
+  .focal-desc { font-size:22px; color:var(--ink-2); line-height:1.5; margin:0; max-width:880px; }
+  .focal-viz { margin-top:auto; display:flex; gap:16px; align-items:center; flex-wrap:wrap; }
+  .focal-viz .blob {
+    background:var(--paper); border:1px solid var(--border-2); padding:14px 20px;
+    border-radius:10px; font-family:'Geist Mono',monospace; font-size:20px; color:var(--ink-2);
+  }
+  .focal-viz .blob.hi { background:var(--accent-bg); border-color:var(--accent); color:var(--accent-ink); font-weight:600; }
+
+  .frame-meta {
+    width:100%; max-width:1200px; display:flex; justify-content:space-between;
+    font-family:'Geist Mono',monospace; font-size:10.5px; color:#52525b;
+  }
+</style>
+</head>
+<body>
+  <div class="chrome">
+    <div class="topbar">
+      <span class="tag">video-target · 16:9</span>
+      <span>fixed frame · 1920 × 1080 · no scroll · exportable to MP4</span>
+    </div>
+
+    <div class="stage-wrap" id="wrap">
+      <div class="stage" id="stage">
+        <div class="stage-inner">
+
+          <div class="overview">
+            <h2>Pipeline</h2>
+            <ul class="layer-list" id="list">
+              <li class="layer-item"><span class="dot"></span>Input</li>
+              <li class="layer-item"><span class="dot"></span>Tokenizer</li>
+              <li class="layer-item"><span class="dot"></span>Embeddings</li>
+              <li class="layer-item"><span class="dot"></span>Attention</li>
+              <li class="layer-item"><span class="dot"></span>FFN</li>
+              <li class="layer-item"><span class="dot"></span>LM head</li>
+              <li class="layer-item"><span class="dot"></span>Sampling</li>
+            </ul>
+          </div>
+
+          <div class="focal" id="focal">
+            <span class="focal-head" id="step">step 01</span>
+            <h1 class="focal-title" id="title">Input</h1>
+            <p class="focal-desc" id="desc">The user sends a prompt as plain text.</p>
+            <div class="focal-viz" id="viz"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-meta">
+      <span>● overview sidebar (25%) + focal area (75%) · content swaps in place</span>
+      <span>recordable cleanly</span>
+    </div>
+  </div>
+
+<script>
+(() => {
+  // Fit logical 1920×1080 into the .stage-wrap.
+  const stage = document.getElementById("stage");
+  const wrap  = document.getElementById("wrap");
+  function fit() {
+    const r = wrap.getBoundingClientRect();
+    const k = Math.min(r.width / 1920, r.height / 1080);
+    stage.style.transform = `scale(${k})`;
+  }
+  fit();
+  addEventListener("resize", fit);
+
+  // Step content.
+  const STEPS = [
+    { title: "Input",        desc: "The user sends a prompt as plain text.",                                 viz: [{t:'"¿Qué es un transformer?"', hi:true}] },
+    { title: "Tokenizer",    desc: "Splits the text into subword tokens, mapping each to an integer ID.",    viz: [{t:"¿"},{t:"Qué"},{t:" es"},{t:" un"},{t:" trans"},{t:"former"},{t:"?"}] },
+    { title: "Embeddings",   desc: "Each token becomes a learned vector; positional info is added in.",       viz: [{t:"[N, d_model]", hi:true}, {t:"= [7, 768]"}] },
+    { title: "Attention",    desc: "Every token looks at every other — Q·K, scale, softmax, weighted sum.", viz: [{t:"Q"},{t:"K"},{t:"V"},{t:"softmax(Q·Kᵀ/√d)·V", hi:true}] },
+    { title: "FFN",          desc: "Per-token feed-forward layer adds nonlinear capacity.",                  viz: [{t:"x → W₁ → GELU → W₂", hi:true}] },
+    { title: "LM head",      desc: "Project the last vector to vocabulary scores.",                          viz: [{t:"logits"},{t:"[vocab_size]", hi:true}] },
+    { title: "Sampling",     desc: "Pick the next token (greedy / top-k / nucleus). Append, repeat.",         viz: [{t:'"Es"', hi:true},{t:'"una"'},{t:'"…"'}] },
+  ];
+
+  const stepEl  = document.getElementById("step");
+  const titleEl = document.getElementById("title");
+  const descEl  = document.getElementById("desc");
+  const vizEl   = document.getElementById("viz");
+  const items   = document.querySelectorAll(".layer-item");
+  let i = 0;
+
+  function render() {
+    items.forEach((el, idx) => el.classList.toggle("active", idx === i));
+    const s = STEPS[i];
+    stepEl.textContent = "step " + String(i+1).padStart(2, "0");
+    titleEl.textContent = s.title;
+    descEl.textContent  = s.desc;
+    vizEl.innerHTML = "";
+    s.viz.forEach(v => {
+      const b = document.createElement("div");
+      b.className = "blob" + (v.hi ? " hi" : "");
+      b.textContent = v.t;
+      vizEl.appendChild(b);
+    });
+    i = (i + 1) % STEPS.length;
+  }
+  render();
+  setInterval(render, 1900);
+})();
+</script>
+</body>
+</html>

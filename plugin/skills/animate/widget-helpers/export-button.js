@@ -15,9 +15,10 @@
  * Then the user clicks the floating button. Output: a WebM file in Downloads/.
  * The skill's render.py can convert WebM → MP4 if MP4 is required.
  *
- * Engine: CCapture.js (lazy-loaded from cdnjs on first export click). Records by
- * stepping window.timeline.seek(t_ms) frame-by-frame so the capture is
- * deterministic + frame-perfect regardless of host hardware.
+ * Engine: CCapture.js (lazy-loaded from jsDelivr with fallback to unpkg on
+ * first export click — CCapture.js is NOT hosted on cdnjs). Records by stepping
+ * window.timeline.seek(t_ms) frame-by-frame so the capture is deterministic +
+ * frame-perfect regardless of host hardware.
  */
 
 (function () {
@@ -221,27 +222,50 @@
   }
 
   // ── Engines ──────────────────────────────────────────────────────────
-  function loadScript(src) {
+  // Load a single script URL.
+  function loadScriptOne(src) {
     return new Promise((resolve, reject) => {
       const s = document.createElement("script");
       s.src = src; s.defer = false;
       s.onload = () => resolve();
-      s.onerror = (e) => reject(new Error("failed to load " + src));
+      s.onerror = () => reject(new Error("failed to load " + src));
       document.head.appendChild(s);
     });
   }
 
+  // Try a list of CDN mirrors in order. Resolves on first success, rejects with
+  // the last error if all fail.
+  async function loadScriptWithFallback(srcs) {
+    let lastErr;
+    for (const src of srcs) {
+      try { await loadScriptOne(src); return src; }
+      catch (e) { lastErr = e; }
+    }
+    throw lastErr ?? new Error("no script sources provided");
+  }
+
+  // CCapture.js is NOT on cdnjs. Use jsDelivr primary, unpkg fallback.
+  const CCAPTURE_SRCS = [
+    "https://cdn.jsdelivr.net/npm/ccapture.js@1.1.0/build/CCapture.all.min.js",
+    "https://unpkg.com/ccapture.js@1.1.0/build/CCapture.all.min.js",
+  ];
+  const HTML2CANVAS_SRCS = [
+    "https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js",
+    "https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js",
+    "https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js",
+  ];
+
   let ccaptureLoaded = false;
   async function ensureCCapture() {
     if (ccaptureLoaded || window.CCapture) { ccaptureLoaded = true; return; }
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/ccapture.js/1.0.9/CCapture.all.min.js");
+    await loadScriptWithFallback(CCAPTURE_SRCS);
     ccaptureLoaded = true;
   }
 
   let html2canvasLoaded = false;
   async function ensureHtml2Canvas() {
     if (html2canvasLoaded || window.html2canvas) { html2canvasLoaded = true; return; }
-    await loadScript("https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js");
+    await loadScriptWithFallback(HTML2CANVAS_SRCS);
     html2canvasLoaded = true;
   }
 

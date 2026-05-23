@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Output mode preview · Browser-native (vertical scroll, free aspect)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:#fafaf7; --card:#fff; --ink:#09090b; --ink-2:#3f3f46; --ink-3:#71717a;
+    --border:#e7e5e4; --border-2:#d4d4d8;
+    --accent:#eab308; --accent-bg:#fef3c7; --accent-ink:#713f12; --accent-glow:rgba(234,179,8,.45);
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--paper); color:var(--ink);
+    font-family:'Geist',ui-sans-serif,system-ui,sans-serif; }
+  .topbar {
+    position:sticky; top:0; z-index:5; background:rgba(250,250,247,.92);
+    backdrop-filter: blur(8px);
+    border-bottom:1px solid var(--border);
+    padding:14px 24px; display:flex; align-items:center; justify-content:space-between;
+  }
+  .tag {
+    font-family:'Geist Mono',monospace; font-size:10.5px; color:var(--accent-ink);
+    background:var(--accent-bg); border:1px solid var(--accent);
+    padding:4px 10px; border-radius:6px; text-transform:uppercase; letter-spacing:.1em;
+  }
+  .meta { font-family:'Geist Mono',monospace; font-size:11px; color:var(--ink-3); }
+  .container { max-width:760px; margin:0 auto; padding:32px 24px 80px; }
+  h1 { font-size:34px; font-weight:600; margin:0 0 8px; letter-spacing:-0.02em; }
+  .lede { color:var(--ink-3); font-size:15px; margin:0 0 32px; }
+  .step {
+    background:var(--card); border:1px solid var(--border); border-radius:12px;
+    padding:24px 26px; display:flex; gap:18px; margin-bottom:14px;
+    opacity:.5; transition: opacity 280ms, border-color 280ms, box-shadow 280ms;
+  }
+  .step.active {
+    opacity:1; border-color:var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-glow), 0 6px 28px rgba(0,0,0,0.06);
+  }
+  .badge {
+    width:28px; height:28px; flex:0 0 28px; border-radius:50%;
+    background:var(--ink); color:var(--paper);
+    display:grid; place-items:center;
+    font-family:'Geist Mono',monospace; font-size:11px; font-weight:600;
+  }
+  .step.active .badge { background:var(--accent); color:var(--accent-ink); }
+  .body { flex:1; display:flex; flex-direction:column; gap:6px; }
+  .body .row { display:flex; gap:10px; align-items:center; }
+  .body h3 { font-size:17px; font-weight:600; margin:0; }
+  .pill {
+    font-family:'Geist Mono',monospace; font-size:10.5px; color:var(--ink-2);
+    background:#f4f4f5; border:1px solid var(--border-2); padding:2px 8px; border-radius:5px;
+  }
+  .desc { color:var(--ink-2); font-size:14px; line-height:1.55; margin:0; }
+  .viz {
+    height:42px; margin-top:8px; border-radius:8px; background:#f4f4f5;
+    border:1px solid var(--border); display:flex; align-items:center; gap:6px; padding:0 12px;
+  }
+  .cell { width:14px; height:24px; background:var(--ink-3); border-radius:3px; transform:scaleY(.4);
+    transition: transform 420ms, background 420ms; }
+  .step.active .cell { background:var(--accent); transform:scaleY(1); }
+  .connector { font-family:'Geist Mono',monospace; font-size:11px; color:var(--ink-3);
+    text-align:center; margin:6px 0 6px 18px; }
+  .footer-note {
+    margin-top:60px; padding:18px 22px; border-radius:10px;
+    border:1px dashed var(--border-2); color:var(--ink-3); font-size:13px;
+    font-family:'Geist Mono',monospace; line-height:1.6;
+  }
+  .footer-note b { color:var(--ink); }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <span class="tag">browser-native</span>
+    <span class="meta">scrolls · free aspect · NOT exportable to video</span>
+  </div>
+  <div class="container">
+    <h1>How a transformer answers a prompt</h1>
+    <p class="lede">Read top-to-bottom. Scroll at your own pace. The cursor highlights each step in turn.</p>
+
+    <div class="step" data-i="0">
+      <div class="badge">01</div>
+      <div class="body">
+        <div class="row"><h3>Input text</h3><span class="pill">string</span></div>
+        <p class="desc">The user sends a prompt as plain text.</p>
+        <div class="viz"><span class="cell"></span><span class="cell"></span><span class="cell"></span></div>
+      </div>
+    </div>
+    <div class="connector">↓ tokenize</div>
+
+    <div class="step" data-i="1">
+      <div class="badge">02</div>
+      <div class="body">
+        <div class="row"><h3>Tokenizer</h3><span class="pill">BPE / SentencePiece</span></div>
+        <p class="desc">Splits the text into subword tokens, mapping each to an integer ID.</p>
+        <div class="viz"><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span></div>
+      </div>
+    </div>
+    <div class="connector">↓ embed + pos</div>
+
+    <div class="step" data-i="2">
+      <div class="badge">03</div>
+      <div class="body">
+        <div class="row"><h3>Token + positional embeddings</h3><span class="pill">[N, d_model]</span></div>
+        <p class="desc">Each token becomes a learned vector; positional info is added in.</p>
+        <div class="viz"><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span></div>
+      </div>
+    </div>
+    <div class="connector">↓ attention × N</div>
+
+    <div class="step" data-i="3">
+      <div class="badge">04</div>
+      <div class="body">
+        <div class="row"><h3>Attention + FFN stack</h3><span class="pill">N transformer blocks</span></div>
+        <p class="desc">Each block lets every token look at every other and refine its representation.</p>
+        <div class="viz"><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span><span class="cell"></span></div>
+      </div>
+    </div>
+    <div class="connector">↓ project + sample</div>
+
+    <div class="step" data-i="4">
+      <div class="badge">05</div>
+      <div class="body">
+        <div class="row"><h3>LM head + sampling</h3><span class="pill">→ next token</span></div>
+        <p class="desc">Final vector projects to vocabulary scores; one token is sampled.</p>
+        <div class="viz"><span class="cell"></span><span class="cell"></span><span class="cell"></span></div>
+      </div>
+    </div>
+
+    <div class="footer-note">
+      <b>This is the browser-native shape.</b><br>
+      Cards stack vertically and the page scrolls — comfortable to read, easy to skim back.
+      Good for tutorials, docs, study material.<br>
+      <b style="color:#c2410c;">Trade-off:</b> recording this as a video produces a long thin file with scroll. For social/landscape video, pick <i>video-target</i> instead.
+    </div>
+  </div>
+
+<script>
+(() => {
+  const steps = document.querySelectorAll(".step");
+  let i = 0;
+  function tick() {
+    steps.forEach((el, idx) => el.classList.toggle("active", idx === i));
+    i = (i + 1) % steps.length;
+  }
+  tick();
+  setInterval(tick, 1400);
+})();
+</script>
+</body>
+</html>

@@ -31,7 +31,7 @@ When they click the button:
 
 - A modal opens with controls for **aspect** (16:9 / 9:16 / 1:1 / current), **resolution** (720p / 1080p / 1440p / 4K), **fps** (30 / 60), **duration** (1-60 seconds).
 - Pre-fills duration from `window.timeline.duration` if it's a finite value.
-- On "Start recording", lazy-loads CCapture.js + html2canvas from cdnjs (~150KB), steps the timeline, captures every frame, saves as `animation-WxH-timestamp.webm` to Downloads.
+- On "Start recording", lazy-loads CCapture.js (jsDelivr primary + unpkg fallback — not on cdnjs) and html2canvas (cdnjs primary + jsDelivr/unpkg fallback), ~150KB total. Steps the timeline, captures every frame, saves as `animation-WxH-timestamp.webm` to Downloads.
 - A progress bar shows percent + frame count during recording.
 
 ## When to defer

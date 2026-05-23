@@ -1,7 +1,7 @@
 {
   "name": "explanatory-animations",
   "description": "Build polished interactive animated explanations and content-creator effects from natural-language prompts. 16 patterns (lifecycles, system flows, algorithms, mechanical motion, orbits, particles, LLM internals, math, geographic maps, cross-sections, timelines, text effects, counters, shape morph, line drawing). Self-contained HTML widgets (Anime.js v4), in-browser Export button, autonomous MP4 renderer, optional Remotion Studio. Auto-installs deps with consent on first run.",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "author": {
     "name": "NightZpy"
   },

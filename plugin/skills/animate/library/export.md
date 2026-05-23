@@ -42,7 +42,7 @@ Add **one line** to any widget the skill generates and a floating "⬇ Export" b
 ```
 
 How it works:
-- The script lazy-loads `CCapture.js` + `html2canvas` from cdnjs on first export click.
+- The script lazy-loads `CCapture.js` (jsDelivr primary, unpkg fallback — CCapture.js is not on cdnjs) and `html2canvas` (cdnjs primary, jsDelivr/unpkg fallback) on first export click.
 - It auto-detects the "stage" element (preferring `[data-export-target]` → `.bbg2-stage` → `.state-machine` → `.stage` → `main` → `body`). Override by setting `window.exportTarget = element`.
 - Calls `window.timeline.pause(); window.timeline.seek(0)` then steps `seek(t_ms)` per frame — deterministic regardless of CPU.
 - Rasterizes each frame via `html2canvas` and feeds the canvas to `CCapture.capture()`.

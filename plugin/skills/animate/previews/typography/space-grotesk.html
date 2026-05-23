@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Typography preview · Space Grotesk + IBM Plex Mono</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:#0f0f17; --card:#1f1f33; --ink:#f4f4f5; --ink-2:#d4d4d8; --ink-3:#a1a1aa;
+    --border:#2d2d44; --accent:#22d3ee;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; min-height:100vh; background:var(--paper); color:var(--ink);
+    font-family:'Space Grotesk',ui-sans-serif,sans-serif;
+    padding:56px 32px; display:flex; justify-content:center;
+  }
+  .wrap { width:min(720px,100%); display:flex; flex-direction:column; gap:36px; }
+  .tag { font-size:11px; text-transform:uppercase; letter-spacing:0.14em; color:var(--ink-3);
+    font-family:'IBM Plex Mono',monospace; }
+  .hero h1 { font-size:52px; font-weight:600; letter-spacing:-0.02em; line-height:1.02; margin:0 0 14px; }
+  .hero h1 span { color:var(--accent); }
+  .hero .lede { font-size:18px; color:var(--ink-2); line-height:1.55; margin:0; max-width:600px; }
+  .sample { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:28px;
+    display:flex; flex-direction:column; gap:16px; }
+  .sample h2 { font-size:24px; font-weight:600; margin:0; letter-spacing:-0.01em; }
+  .sample p { margin:0; color:var(--ink-2); line-height:1.6; font-size:15px; }
+  .code { font-family:'IBM Plex Mono',ui-monospace,monospace; font-size:13px;
+    background:#0a0a12; color:#f4f4f5; padding:16px 18px; border-radius:10px; line-height:1.6;
+    border:1px solid var(--border); }
+  .code .kw { color:#22d3ee; }
+  .code .str { color:#e879f9; }
+  .meta { display:flex; gap:24px; font-size:12px; color:var(--ink-3);
+    font-family:'IBM Plex Mono',monospace; }
+  .meta b { color:var(--ink); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="tag">Typography · pairing 3</div>
+    <div class="hero">
+      <h1>Space Grotesk <span>+</span> IBM Plex Mono.</h1>
+      <p class="lede">Technical, geometric, modern. Slight character without losing neutrality — works for systems content with a bit more personality than Geist.</p>
+    </div>
+
+    <div class="sample">
+      <h2>Token streams &amp; attention</h2>
+      <p>Each layer reads the full sequence so far, weighs every position against every other, and writes a refined representation. Repeat N times. The last layer's output projects back to vocabulary scores.</p>
+      <div class="code"><span class="kw">const</span> tokens = tokenizer.encode(<span class="str">"hola mundo"</span>);
+<span class="kw">const</span> output = <span class="kw">await</span> model.generate(tokens);</div>
+    </div>
+
+    <div class="meta">
+      <span>display · <b>Space Grotesk 600</b></span>
+      <span>body · <b>Space Grotesk 400</b></span>
+      <span>mono · <b>IBM Plex Mono 400</b></span>
+    </div>
+  </div>
+</body>
+</html>

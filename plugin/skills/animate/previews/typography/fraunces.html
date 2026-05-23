@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Typography preview · Fraunces + JetBrains Mono</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:#fdf7ec; --card:#fff; --ink:#1c1917; --ink-2:#44403c; --ink-3:#78716c;
+    --border:#e7e3dc; --accent:#c2410c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; min-height:100vh; background:var(--paper); color:var(--ink);
+    font-family:'Fraunces',Georgia,serif; font-variation-settings:"opsz" 32;
+    padding:56px 32px; display:flex; justify-content:center;
+  }
+  .wrap { width:min(720px,100%); display:flex; flex-direction:column; gap:36px; }
+  .tag { font-size:11px; text-transform:uppercase; letter-spacing:0.14em; color:var(--ink-3);
+    font-family:'JetBrains Mono',monospace; }
+  .hero h1 { font-size:54px; font-weight:500; line-height:1.02; margin:0 0 14px;
+    font-variation-settings:"opsz" 120,"SOFT" 30; letter-spacing:-0.02em; }
+  .hero h1 em { font-style:italic; color:var(--accent); }
+  .hero .lede { font-size:19px; color:var(--ink-2); line-height:1.55; margin:0; max-width:600px;
+    font-variation-settings:"opsz" 24; }
+  .sample { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:28px;
+    display:flex; flex-direction:column; gap:16px; }
+  .sample h2 { font-size:26px; font-weight:500; margin:0; letter-spacing:-0.01em;
+    font-variation-settings:"opsz" 60; }
+  .sample p { margin:0; color:var(--ink-2); line-height:1.65; font-size:16px;
+    font-variation-settings:"opsz" 18; }
+  .code { font-family:'JetBrains Mono',ui-monospace,monospace; font-size:13px;
+    background:#1c1917; color:#fdf7ec; padding:16px 18px; border-radius:10px; line-height:1.55; }
+  .code .kw { color:#fb923c; }
+  .code .str { color:#fcd34d; }
+  .meta { display:flex; gap:24px; font-size:12px; color:var(--ink-3);
+    font-family:'JetBrains Mono',monospace; }
+  .meta b { color:var(--ink); }
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="tag">Typography · pairing 2</div>
+    <div class="hero">
+      <h1>Fraunces <em>+</em> JetBrains Mono.</h1>
+      <p class="lede">Editorial, journalistic, narrative. Soft optical sizes, italic that does work, mono with a stronger character — for story-driven explanations.</p>
+    </div>
+
+    <div class="sample">
+      <h2>The journey of a request</h2>
+      <p>From the moment the prompt arrives, the model engages a sequence of stages. Each one inspects, transforms, decides — until, at last, a single token emerges and the next begins.</p>
+      <div class="code"><span class="kw">const</span> tokens = tokenizer.encode(<span class="str">"hola mundo"</span>);
+<span class="kw">const</span> output = <span class="kw">await</span> model.generate(tokens);</div>
+    </div>
+
+    <div class="meta">
+      <span>display · <b>Fraunces 500</b></span>
+      <span>body · <b>Fraunces 400</b></span>
+      <span>mono · <b>JetBrains Mono 400</b></span>
+    </div>
+  </div>
+</body>
+</html>

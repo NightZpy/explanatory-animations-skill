@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Output mode preview · Video-target 9:16 (1080×1920, reel)</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:#fafaf7; --paper-2:#fdfdfb; --card:#fff;
+    --ink:#09090b; --ink-2:#3f3f46; --ink-3:#71717a; --ink-4:#a1a1aa;
+    --border:#e7e5e4; --border-2:#d4d4d8;
+    --accent:#eab308; --accent-bg:#fef3c7; --accent-ink:#713f12;
+    --accent-glow:rgba(234,179,8,.45);
+    --accent-2:#dc2626; --accent-3:#16a34a;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:#0a0a0c; color:var(--ink);
+    font-family:'Geist',ui-sans-serif,system-ui,sans-serif; overflow:hidden; }
+  .chrome { position:fixed; inset:0; display:flex; flex-direction:column;
+    padding:14px 20px; align-items:center; justify-content:center; gap:10px; }
+  .topbar { width:100%; max-width:540px; display:flex; justify-content:space-between; align-items:center;
+    font-family:'Geist Mono',monospace; font-size:11px; color:#a1a1aa; }
+  .tag { color:#0a0a0c; background:#eab308; padding:4px 10px; border-radius:6px;
+    text-transform:uppercase; letter-spacing:.1em; font-weight:600; }
+  .stage-wrap { position:relative; height:calc(100vh - 96px); aspect-ratio:9/16; max-width:540px;
+    background:var(--paper); border-radius:28px; box-shadow: 0 30px 80px rgba(0,0,0,.5); overflow:hidden; }
+  .stage { position:absolute; top:0; left:0; width:1080px; height:1920px; transform-origin: top left; }
+  .stage-inner { width:100%; height:100%; display:flex; flex-direction:column;
+    padding:72px 56px 56px; gap:24px; }
+
+  /* ── Header ── */
+  .reel-head { display:flex; justify-content:space-between; align-items:center; }
+  .step-tag { color:var(--accent-ink); background:var(--accent-bg); border:2px solid var(--accent);
+    padding:10px 22px; border-radius:12px; font-family:'Geist Mono',monospace; font-size:26px;
+    font-weight:600; letter-spacing:.1em; }
+  .topic { font-family:'Geist Mono',monospace; font-size:20px; color:var(--ink-3); }
+
+  /* ── Title block ── */
+  .title-block { display:flex; flex-direction:column; gap:14px; }
+  .focal-title { font-size:84px; font-weight:700; letter-spacing:-0.03em; margin:0; line-height:1.0; color:var(--ink); }
+  .focal-desc  { font-size:28px; color:var(--ink-2); line-height:1.4; margin:0; min-height:80px; }
+
+  /* ── Centerpiece viz ── */
+  .viz-area { flex:1; min-height:0; background:var(--card); border:2px solid var(--border);
+    border-radius:24px; padding:40px; display:flex; flex-direction:column; align-items:center;
+    justify-content:center; gap:28px; position:relative; overflow:hidden; }
+  .viz-area::after {
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background: radial-gradient(circle at 50% 50%, transparent 60%, rgba(0,0,0,.04));
+  }
+
+  /* prompt card */
+  .prompt-card { font-family:'Geist Mono',monospace; font-size:38px; color:var(--ink);
+    background:var(--paper); border:2px dashed var(--border-2); padding:28px 36px; border-radius:18px;
+    text-align:center; max-width:90%; }
+
+  /* token row */
+  .tokens { display:flex; flex-wrap:wrap; gap:12px; justify-content:center; align-items:center; }
+  .tok { font-family:'Geist Mono',monospace; font-size:34px; padding:14px 22px;
+    background:var(--paper); border:2px solid var(--border-2); border-radius:14px; color:var(--ink-2);
+    opacity:0; transform: translateY(20px); }
+
+  /* vector grid (N × d) */
+  .vgrid { display:grid; grid-template-columns: repeat(8, 1fr); gap:6px; width:100%; max-width:680px; }
+  .vcell { aspect-ratio:1; border-radius:5px; background:var(--border-2); transform: scaleY(.2); opacity:.4; }
+
+  /* attention grid (N × N) */
+  .agrid { display:grid; grid-template-columns: repeat(7, 1fr); gap:5px; width:100%; max-width:520px; }
+  .acell { aspect-ratio:1; border-radius:5px; background:var(--ink-4); opacity:.25;
+    transform: scale(.4); }
+
+  /* FFN bars */
+  .bars { display:flex; gap:10px; align-items:flex-end; width:100%; max-width:680px; height:240px; }
+  .bar { flex:1; background: linear-gradient(180deg, var(--accent) 0%, var(--accent-2) 100%);
+    border-radius:6px 6px 2px 2px; transform: scaleY(0); transform-origin: bottom; }
+
+  /* logits */
+  .logits { display:flex; flex-direction:column; gap:10px; width:100%; max-width:680px; }
+  .logit-row { display:flex; align-items:center; gap:14px; font-family:'Geist Mono',monospace;
+    font-size:26px; color:var(--ink-2); }
+  .logit-row .label { width:120px; text-align:right; }
+  .logit-row .track { flex:1; height:24px; background:var(--paper); border:1px solid var(--border);
+    border-radius:6px; overflow:hidden; position:relative; }
+  .logit-row .fill { position:absolute; top:0; left:0; bottom:0;
+    background: linear-gradient(90deg, var(--accent-bg), var(--accent));
+    width:0%; }
+  .logit-row .pct { width:80px; font-size:20px; color:var(--ink-3); }
+
+  /* sampled token */
+  .sampled { font-family:'Geist',serif; font-size:120px; font-weight:700; letter-spacing:-0.04em;
+    color:var(--accent-ink); background:var(--accent-bg); padding:20px 56px; border-radius:24px;
+    border:3px solid var(--accent); box-shadow: 0 0 0 12px var(--accent-glow);
+    transform: scale(0); }
+
+  /* viz title strip */
+  .viz-meta { font-family:'Geist Mono',monospace; font-size:22px; color:var(--ink-3);
+    text-align:center; }
+  .viz-meta b { color:var(--accent-ink); background:var(--accent-bg); padding:4px 12px; border-radius:6px;
+    border:1px solid var(--accent); }
+
+  /* ── Bottom: live token stream + progress ── */
+  .stream-block { display:flex; flex-direction:column; gap:18px; }
+  .stream {
+    display:flex; gap:8px; padding:18px 22px; background:var(--card);
+    border:1px solid var(--border); border-radius:16px; align-items:center;
+  }
+  .stream-label { font-family:'Geist Mono',monospace; font-size:18px; color:var(--ink-3);
+    margin-right:6px; }
+  .stream-tok { font-family:'Geist Mono',monospace; font-size:22px; padding:6px 12px;
+    background:var(--paper); border:1px solid var(--border-2); border-radius:8px; color:var(--ink-3);
+    transition: background 300ms, color 300ms, border-color 300ms, transform 300ms; flex:0 0 auto; }
+  .stream-tok.active { background:var(--accent); color:var(--accent-ink); border-color:var(--accent);
+    transform: translateY(-2px); font-weight:600; }
+  .stream-tok.done { background:var(--accent-bg); color:var(--accent-ink); border-color:var(--accent); }
+
+  .progress { display:flex; gap:8px; }
+  .pdot { flex:1; height:12px; background:var(--border-2); border-radius:6px; transition: background 320ms; }
+  .pdot.done { background:var(--accent); }
+  .pdot.current { background:var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); }
+
+  .frame-meta { width:100%; max-width:540px; display:flex; justify-content:space-between;
+    font-family:'Geist Mono',monospace; font-size:10.5px; color:#52525b; }
+</style>
+</head>
+<body>
+  <div class="chrome">
+    <div class="topbar">
+      <span class="tag">video-target · 9:16</span>
+      <span>1080 × 1920 · reel · exportable</span>
+    </div>
+
+    <div class="stage-wrap" id="wrap">
+      <div class="stage" id="stage">
+        <div class="stage-inner">
+
+          <div class="reel-head">
+            <span class="step-tag" id="step">01</span>
+            <span class="topic">LLM transformer</span>
+          </div>
+
+          <div class="title-block">
+            <h1 class="focal-title" id="title">Input</h1>
+            <p class="focal-desc"  id="desc">The user sends a prompt as plain text.</p>
+          </div>
+
+          <div class="viz-area" id="viz">
+            <!-- per-step viz injected here -->
+          </div>
+
+          <div class="stream-block">
+            <div class="stream" id="stream">
+              <span class="stream-label">tokens →</span>
+              <!-- token chips injected -->
+            </div>
+            <div class="progress" id="progress"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-meta">
+      <span>● always-visible token stream · rich centerpiece viz · transitions animated</span>
+      <span>recordable cleanly</span>
+    </div>
+  </div>
+
+<script type="module">
+import { animate, createTimeline, stagger, utils } from "https://esm.sh/animejs@4.1.4";
+
+// ── Fit the 1080x1920 logical stage into the visible frame ──────────────
+const stage = document.getElementById("stage");
+const wrap  = document.getElementById("wrap");
+function fit() {
+  const r = wrap.getBoundingClientRect();
+  const k = Math.min(r.width / 1080, r.height / 1920);
+  stage.style.transform = `scale(${k})`;
+}
+fit(); addEventListener("resize", fit);
+
+const TOKENS = ['"¿"','"Qué"','" es"','" un"','" trans"','"former"','"?"'];
+
+// ── Build the bottom token stream + progress dots ───────────────────────
+const stream = document.getElementById("stream");
+TOKENS.forEach(t => {
+  const el = document.createElement("span");
+  el.className = "stream-tok";
+  el.textContent = t;
+  stream.appendChild(el);
+});
+const streamToks = stream.querySelectorAll(".stream-tok");
+
+const progress = document.getElementById("progress");
+const STEP_COUNT = 7;
+for (let i = 0; i < STEP_COUNT; i++) {
+  const d = document.createElement("div");
+  d.className = "pdot";
+  progress.appendChild(d);
+}
+const pdots = progress.querySelectorAll(".pdot");
+
+// ── Step definitions: title, desc, viz builder, motion ──────────────────
+const STEPS = [
+  {
+    title: "Input",
+    desc:  "The user sends a prompt as plain text.",
+    build: (root) => {
+      root.innerHTML = '<div class="prompt-card">"¿Qué es un transformer?"</div>' +
+        '<div class="viz-meta">raw <b>string</b></div>';
+    },
+    play: (root, tl) => {
+      tl.add(root.querySelector(".prompt-card"),
+        { opacity: [0, 1], scale: [0.92, 1], duration: 600, ease: "out(3)" }, 0)
+        .add(root.querySelector(".viz-meta"),
+          { opacity: [0, 1], translateY: [12, 0], duration: 400 }, 250);
+    },
+    streamState: () => ({ active: -1, done: -1 }),
+  },
+  {
+    title: "Tokenizer",
+    desc:  "Splits the text into subword tokens, each mapped to an integer ID.",
+    build: (root) => {
+      const wrap = document.createElement("div");
+      wrap.className = "tokens";
+      TOKENS.forEach(t => {
+        const el = document.createElement("span");
+        el.className = "tok"; el.textContent = t;
+        wrap.appendChild(el);
+      });
+      root.appendChild(wrap);
+      const meta = document.createElement("div");
+      meta.className = "viz-meta";
+      meta.innerHTML = '7 tokens · <b>BPE</b>';
+      root.appendChild(meta);
+    },
+    play: (root, tl) => {
+      tl.add(root.querySelectorAll(".tok"),
+        { opacity: [0, 1], translateY: [20, 0], duration: 360, delay: stagger(80), ease: "out(2)" }, 0)
+        .add(root.querySelector(".viz-meta"),
+          { opacity: [0, 1], duration: 380 }, 700);
+    },
+    streamState: () => ({ active: 6, done: 6 }),  // all tokens lit
+  },
+  {
+    title: "Embeddings",
+    desc:  "Each token becomes a learned vector + positional info.",
+    build: (root) => {
+      const g = document.createElement("div");
+      g.className = "vgrid";
+      // 7 rows × 8 cells (truncated vector preview)
+      for (let i = 0; i < 7 * 8; i++) {
+        const c = document.createElement("div");
+        c.className = "vcell";
+        // pseudo-random brightness
+        const hue = (i * 47 + 13) % 360;
+        c.style.background = `hsl(${hue}, 65%, 55%)`;
+        g.appendChild(c);
+      }
+      root.appendChild(g);
+      const meta = document.createElement("div");
+      meta.className = "viz-meta";
+      meta.innerHTML = '<b>[N, d_model]</b> = [7, 768]';
+      root.appendChild(meta);
+    },
+    play: (root, tl) => {
+      tl.add(root.querySelectorAll(".vcell"),
+        { scaleY: [0.2, 1], opacity: [0.4, 1], duration: 420,
+          delay: stagger(14, { grid: [8, 7], from: "first" }), ease: "out(2)" }, 0)
+        .add(root.querySelector(".viz-meta"),
+          { opacity: [0, 1], duration: 380 }, 600);
+    },
+    streamState: () => ({ active: -1, done: 6 }),
+  },
+  {
+    title: "Attention",
+    desc:  "Every token attends to every other — Q·Kᵀ/√d · V.",
+    build: (root) => {
+      const g = document.createElement("div");
+      g.className = "agrid";
+      for (let r = 0; r < 7; r++) {
+        for (let c = 0; c < 7; c++) {
+          const cell = document.createElement("div");
+          cell.className = "acell";
+          // diagonal + a few attention sites highlighted
+          const dist = Math.abs(r - c);
+          const intensity = Math.max(0.2, 1 - dist * 0.2);
+          cell.style.background = dist === 0 ? "#eab308" :
+            dist <= 1 ? "#fcd34d" : "#a1a1aa";
+          cell.style.setProperty("--target-opacity", intensity);
+          g.appendChild(cell);
+        }
+      }
+      root.appendChild(g);
+      const meta = document.createElement("div");
+      meta.className = "viz-meta";
+      meta.innerHTML = '<b>N × N</b> attention matrix · 7 × 7';
+      root.appendChild(meta);
+    },
+    play: (root, tl) => {
+      tl.add(root.querySelectorAll(".acell"),
+        { scale: [0.4, 1], opacity: (el) => [0.25, parseFloat(el.style.getPropertyValue("--target-opacity")) || 0.4],
+          duration: 460,
+          delay: stagger(18, { grid: [7, 7], from: "center" }), ease: "out(2)" }, 0)
+        .add(root.querySelector(".viz-meta"),
+          { opacity: [0, 1], duration: 380 }, 700);
+    },
+    streamState: () => ({ active: -1, done: 6 }),
+  },
+  {
+    title: "FFN",
+    desc:  "Per-token feed-forward layer — nonlinear refinement.",
+    build: (root) => {
+      const b = document.createElement("div");
+      b.className = "bars";
+      const heights = [0.35, 0.62, 0.28, 0.82, 0.55, 0.91, 0.40, 0.71, 0.48, 0.66, 0.30, 0.78];
+      heights.forEach(h => {
+        const bar = document.createElement("div");
+        bar.className = "bar";
+        bar.style.setProperty("--target-h", h);
+        bar.dataset.h = h;
+        b.appendChild(bar);
+      });
+      root.appendChild(b);
+      const meta = document.createElement("div");
+      meta.className = "viz-meta";
+      meta.innerHTML = 'x → W₁ → <b>GELU</b> → W₂';
+      root.appendChild(meta);
+    },
+    play: (root, tl) => {
+      tl.add(root.querySelectorAll(".bar"),
+        { scaleY: (el) => [0, parseFloat(el.dataset.h)],
+          duration: 700, delay: stagger(45), ease: "out(3)" }, 0)
+        .add(root.querySelector(".viz-meta"),
+          { opacity: [0, 1], duration: 380 }, 600);
+    },
+    streamState: () => ({ active: -1, done: 6 }),
+  },
+  {
+    title: "LM head",
+    desc:  "Project the last vector to vocabulary scores.",
+    build: (root) => {
+      const list = document.createElement("div");
+      list.className = "logits";
+      const data = [
+        { label: '"Es"',     pct: 64 },
+        { label: '"Un"',     pct: 14 },
+        { label: '"Una"',    pct:  9 },
+        { label: '"Cuál"',   pct:  6 },
+        { label: '"Realme"', pct:  4 },
+      ];
+      data.forEach(d => {
+        const row = document.createElement("div");
+        row.className = "logit-row";
+        row.innerHTML = `<span class="label">${d.label}</span>
+          <span class="track"><span class="fill" data-pct="${d.pct}"></span></span>
+          <span class="pct">${d.pct}%</span>`;
+        list.appendChild(row);
+      });
+      root.appendChild(list);
+      const meta = document.createElement("div");
+      meta.className = "viz-meta";
+      meta.innerHTML = '<b>softmax</b>(logits) → next-token probabilities';
+      root.appendChild(meta);
+    },
+    play: (root, tl) => {
+      tl.add(root.querySelectorAll(".logit-row"),
+        { opacity: [0, 1], translateX: [-20, 0], duration: 380, delay: stagger(90), ease: "out(2)" }, 0)
+        .add(root.querySelectorAll(".logit-row .fill"),
+          { width: (el) => el.dataset.pct + "%", duration: 720, delay: stagger(90, { start: 180 }), ease: "out(3)" }, 0)
+        .add(root.querySelector(".viz-meta"),
+          { opacity: [0, 1], duration: 380 }, 800);
+    },
+    streamState: () => ({ active: -1, done: 6 }),
+  },
+  {
+    title: "Sampling",
+    desc:  'Pick the next token. Append. Repeat until "stop".',
+    build: (root) => {
+      const t = document.createElement("div");
+      t.className = "sampled";
+      t.textContent = '"Es"';
+      root.appendChild(t);
+      const meta = document.createElement("div");
+      meta.className = "viz-meta";
+      meta.innerHTML = 'argmax / top-k / nucleus → <b>"Es"</b>';
+      root.appendChild(meta);
+    },
+    play: (root, tl) => {
+      tl.add(root.querySelector(".sampled"),
+        { scale: [0, 1.06, 1], duration: 700, ease: "out(3)" }, 0)
+        .add(root.querySelector(".viz-meta"),
+          { opacity: [0, 1], duration: 380 }, 500);
+    },
+    streamState: () => ({ active: -1, done: 6 }),
+  },
+];
+
+// ── Driver ──────────────────────────────────────────────────────────────
+const stepEl  = document.getElementById("step");
+const titleEl = document.getElementById("title");
+const descEl  = document.getElementById("desc");
+const vizEl   = document.getElementById("viz");
+let i = 0;
+
+function paintStream(state, stepIndex) {
+  streamToks.forEach((el, idx) => {
+    el.classList.remove("active", "done");
+    if (state.active === idx) el.classList.add("active");
+    if (idx <= state.done && state.done >= 0 && idx !== state.active) el.classList.add("done");
+  });
+}
+
+function paintProgress(stepIndex) {
+  pdots.forEach((d, idx) => {
+    d.classList.remove("done", "current");
+    if (idx < stepIndex) d.classList.add("done");
+    if (idx === stepIndex) d.classList.add("current");
+  });
+}
+
+async function transitionTo(newIndex) {
+  // Out animation for previous content
+  await animate([titleEl, descEl, vizEl], {
+    opacity: [1, 0], translateY: [0, -8], duration: 260, ease: "in(2)",
+  });
+
+  // Swap content
+  const s = STEPS[newIndex];
+  stepEl.textContent = String(newIndex + 1).padStart(2, "0");
+  titleEl.textContent = s.title;
+  descEl.textContent  = s.desc;
+  vizEl.innerHTML = "";
+  s.build(vizEl);
+
+  // Reset position
+  utils.set([titleEl, descEl, vizEl], { translateY: 8, opacity: 0 });
+
+  // In animation: title + desc fade in, then per-step viz plays
+  const tl = createTimeline({ defaults: { ease: "out(2)" } });
+  tl.add(titleEl, { opacity: [0, 1], translateY: [8, 0], duration: 360 }, 0)
+    .add(descEl,  { opacity: [0, 1], translateY: [8, 0], duration: 360 }, 80)
+    .add(vizEl,   { opacity: [0, 1], duration: 280 }, 200);
+  s.play(vizEl, tl);
+
+  paintStream(s.streamState(), newIndex);
+  paintProgress(newIndex);
+}
+
+let running = false;
+async function loop() {
+  if (running) return;
+  running = true;
+  while (true) {
+    await transitionTo(i);
+    await new Promise(r => setTimeout(r, 2400));
+    i = (i + 1) % STEPS.length;
+  }
+}
+loop();
+</script>
+</body>
+</html>

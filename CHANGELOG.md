@@ -4,7 +4,31 @@ All notable changes to **explanatory-animations** are documented here. Format fo
 
 ## [Unreleased]
 
+## [0.5.0] — 2026-05-22
+
+### Changed
+- **Discovery is now explicitly option-based, never imposing.** SKILL.md gained a new top-level section *"How discovery works (the meta-principle)"* that codifies the rule: every visual decision is presented as 2-4 options with a one-sentence recommendation; the user picks; if the user says *"you decide"* the agent picks the recommendation AND announces it (never silent). The only thing the skill imposes is the 3 hard rules (motion = pedagogy / one focal point / always replayable).
+- **New discovery step 5b — Layout variant**, between output mode and base controls. Once mode + aspect are decided, the geometry within still has many valid shapes per pattern (flow / stack-compact / cursor-timeline for flows; split-horizontal vs split-vertical for comparisons; text-fullscreen vs text-with-tag for text effects; big-number-centered vs counter-plus-context for counters; etc.). SKILL.md ships a table of variants per pattern family, with a default per (pattern × aspect ratio).
+- **Second 9:16 preview** added (`previews/output-modes/video-target-9-16-counter.html`) — same 1080×1920 stage but in the *big-number* variant (radial accent + 480px counter that ticks 0→2380 with burst particles + bottom context rows) to demonstrate that the same output mode admits very different layouts. The original 9:16 preview is now explicitly labelled as the *flow* variant.
+- **Discovery step 5 now asks for output mode FIRST** — *"browser-only or do you also want a video file?"* — before any other interactivity/export question. Picking wrong here is the most expensive mistake (you cannot retrofit a vertical-scroll widget into a single-frame video without regenerating). New doc [`library/output-modes.md`](plugin/skills/animate/library/output-modes.md) defines the two modes (browser-native = scrollable, free aspect; video-target = fixed frame, no scroll, focal-vs-overview split) with explicit layout rules and an auto-default heuristic for the agent.
+- **Output mode question now explicitly forbids hybrid options.** The previous wording let the agent offer "both" / "the two things — separate?" as a third choice, which produces a widget that serves neither use well. SKILL.md now says: present exactly two mutually-exclusive options; if the user needs both shapes, generate two widgets in sequence — never one ambiguous hybrid.
+- **Output mode gained opt-in visual previews**, alongside the existing previews for palette and typography. Three new self-contained HTMLs under [`previews/output-modes/`](plugin/skills/animate/previews/output-modes/): `browser-native.html` (animated vertical card stack with active-step highlight), `video-target-16-9.html` (1920×1080 stage with overview sidebar + focal area swapping content in place), `video-target-9-16.html` (1080×1920 reel-style with top step-counter, central focal area, progress bar). All three animate the *same* transformer-pipeline topic so the user can directly compare how the geometry differs.
+- **Pattern I (Layered transformation)** gained explicit "Output mode" guidance — vertical stack of full-width cards for browser-native vs fixed stage with 25/75 overview-vs-focal split for video-target. Five new pitfalls added.
+
 ### Added
+- **Anime.js v4 pitfalls section** in `engine/anime-cheatsheet.md` documenting four silent-failure patterns that the previous version omitted: delay-only `.add()` (does nothing in v4), CSS `transform` pre-set conflicting with `animate()`, shared classes with initial `opacity:0` not covered by the timeline's animated-targets selector, restart that rebuilds the DOM instead of `pause + seek(0) + utils.set`.
+- **Five new entries in `patterns/_mistakes.md`** (now 15, was 10) covering the same v4 issues from the agent-author perspective. Each entry has bad/good code so the next generation cannot accidentally repeat them.
+
+### Fixed
+- **Export button broke at "Start recording"** with `failed to load https://cdnjs.cloudflare.com/ajax/libs/ccapture.js/1.0.9/CCapture.all.min.js` — CCapture.js is **not hosted on cdnjs** at any version. Switched the lazy-load URLs in `widget-helpers/export-button.js` to jsDelivr (primary, `cdn.jsdelivr.net/npm/ccapture.js@1.1.0`) with unpkg as automatic fallback. Also added a fallback chain for `html2canvas` (cdnjs → jsDelivr → unpkg) in case any single CDN is blocked. Updated `library/export.md` and `add-export-button/SKILL.md` to describe the actual sources.
+
+### Added
+- **Opt-in visual previews** during the 5-step discovery. When the agent asks the user to pick a pattern, a palette, or a typography pairing, it can now offer *"want to see it in your browser first?"* — if yes, the corresponding self-contained HTML opens via the OS opener (`open` / `xdg-open`, plain `file://`, no server, no deps). Files live under `plugin/skills/animate/previews/`:
+  - `previews/palettes/voltage.html`, `editorial.html`, `neon-dark.html` (3/3 palettes)
+  - `previews/typography/geist.html`, `fraunces.html`, `space-grotesk.html` (3/3 pairings)
+  - Pattern previews reuse the existing `examples/*.html` (6/16 available — A, B, M, N, O, P; the rest fall back to text-only description for now)
+  - Index + convention documented in `previews/_index.md`.
+- **User-oriented closing message** for the discovery — the SKILL.md now explicitly tells the agent not to narrate "I'll read pattern doc X and library Y before writing the widget"; instead, summarize *what the user will see, in which style, and when*. Bad/good examples included in the SKILL.md.
 - GitHub Actions workflow (`.github/workflows/validate.yml`) — runs on every push + PR, validates the plugin manifest, the SKILL.md structure of every sub-skill, and pattern doc completeness.
 - `CHANGELOG.md` (this file).
 - `CONTRIBUTING.md` with pattern-author guidelines + PR conventions.
@@ -96,7 +120,8 @@ All notable changes to **explanatory-animations** are documented here. Format fo
 - **One reference implementation** (`examples/lifecycle.html`).
 - **MIT license** + README + install instructions.
 
-[Unreleased]: https://github.com/NightZpy/explanatory-animations-skill/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/NightZpy/explanatory-animations-skill/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/NightZpy/explanatory-animations-skill/releases/tag/v0.5.0
 [0.4.0]: https://github.com/NightZpy/explanatory-animations-skill/releases/tag/v0.4.0
 [0.3.0]: https://github.com/NightZpy/explanatory-animations-skill/releases/tag/v0.3.0
 [0.2.0]: https://github.com/NightZpy/explanatory-animations-skill/releases/tag/v0.2.0

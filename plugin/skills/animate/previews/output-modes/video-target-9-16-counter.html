@@ -1,0 +1,205 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Output mode preview · Video-target 9:16 — big-number variant</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700;800&family=Geist+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper:#0a0a0c; --paper-2:#15151a; --card:#1c1c22;
+    --ink:#fafafa; --ink-2:#d4d4d8; --ink-3:#a1a1aa;
+    --border:#27272a; --border-2:#3f3f46;
+    --accent:#eab308; --accent-2:#dc2626; --accent-glow:rgba(234,179,8,.55);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin:0; height:100%; background:#000; color:var(--ink);
+    font-family:'Geist',ui-sans-serif,system-ui,sans-serif; overflow:hidden; }
+  .chrome { position:fixed; inset:0; display:flex; flex-direction:column; padding:14px 20px;
+    align-items:center; justify-content:center; gap:10px; }
+  .topbar { width:100%; max-width:540px; display:flex; justify-content:space-between; align-items:center;
+    font-family:'Geist Mono',monospace; font-size:11px; color:#a1a1aa; }
+  .tag { color:#0a0a0c; background:#eab308; padding:4px 10px; border-radius:6px;
+    text-transform:uppercase; letter-spacing:.1em; font-weight:600; }
+  .stage-wrap { position:relative; height:calc(100vh - 96px); aspect-ratio:9/16; max-width:540px;
+    background:var(--paper); border-radius:28px; box-shadow: 0 30px 80px rgba(0,0,0,.6); overflow:hidden; }
+  .stage { position:absolute; top:0; left:0; width:1080px; height:1920px; transform-origin: top left; }
+  .stage-inner { width:100%; height:100%; display:flex; flex-direction:column;
+    padding:90px 64px 80px; gap:32px; position:relative; }
+
+  /* radial backdrop accent */
+  .stage-inner::before {
+    content:""; position:absolute; inset:0;
+    background: radial-gradient(circle at 50% 45%, rgba(234,179,8,.18), transparent 60%);
+    pointer-events:none;
+  }
+
+  /* top label */
+  .top-label {
+    align-self:flex-start;
+    font-family:'Geist Mono',monospace; font-size:24px; color:var(--accent);
+    background: rgba(234,179,8,.12); border:2px solid var(--accent);
+    padding:10px 22px; border-radius:12px; letter-spacing:.16em; text-transform:uppercase;
+    position:relative; z-index:1;
+  }
+
+  /* HUGE number (60-70% of frame) */
+  .number-wrap { flex:1; display:flex; flex-direction:column;
+    align-items:center; justify-content:center; gap:20px; position:relative; z-index:1; }
+  .number {
+    font-family:'Geist',sans-serif; font-weight:800; font-size:480px;
+    line-height:0.85; letter-spacing:-0.05em;
+    background: linear-gradient(135deg, #fef3c7 0%, #eab308 45%, #dc2626 100%);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 80px rgba(234,179,8,.4);
+    user-select: none;
+  }
+  .unit {
+    font-family:'Geist Mono',monospace; font-size:48px; color:var(--ink-3);
+    letter-spacing:.04em;
+  }
+  .caption {
+    font-size:36px; color:var(--ink-2); line-height:1.4; text-align:center;
+    max-width:780px; margin:0 auto;
+  }
+
+  /* burst particles */
+  .burst { position:absolute; inset:0; pointer-events:none; }
+  .particle { position:absolute; width:14px; height:14px; border-radius:50%;
+    background:#eab308; opacity:0; }
+
+  /* bottom context block */
+  .context {
+    position:relative; z-index:1;
+    display:flex; flex-direction:column; gap:14px;
+    padding:24px 28px; background: rgba(28,28,34,.6);
+    border:1px solid var(--border); border-radius:18px;
+    backdrop-filter: blur(8px);
+  }
+  .context-title {
+    font-family:'Geist Mono',monospace; font-size:20px; color:var(--ink-3);
+    text-transform:uppercase; letter-spacing:.12em;
+  }
+  .context-row { display:flex; justify-content:space-between; align-items:center;
+    font-family:'Geist Mono',monospace; font-size:24px; color:var(--ink-2); }
+  .context-row b { color:var(--accent); font-weight:600; }
+
+  .frame-meta { width:100%; max-width:540px; display:flex; justify-content:space-between;
+    font-family:'Geist Mono',monospace; font-size:10.5px; color:#52525b; }
+</style>
+</head>
+<body>
+  <div class="chrome">
+    <div class="topbar">
+      <span class="tag">video-target · 9:16 · big-number variant</span>
+      <span>Pattern N — counter / reveal</span>
+    </div>
+
+    <div class="stage-wrap" id="wrap">
+      <div class="stage" id="stage">
+        <div class="stage-inner">
+
+          <div class="burst" id="burst"></div>
+
+          <span class="top-label">tokens / second</span>
+
+          <div class="number-wrap">
+            <div class="number" id="number">0</div>
+            <div class="unit">throughput · A100 · batch 32</div>
+            <p class="caption" id="caption">FP16 inference on a 7B model</p>
+          </div>
+
+          <div class="context">
+            <div class="context-title">vs. baseline</div>
+            <div class="context-row"><span>CPU only</span><b id="ctx1">×1</b></div>
+            <div class="context-row"><span>A100 + KV-cache</span><b id="ctx2">×147</b></div>
+            <div class="context-row"><span>+ paged attention</span><b id="ctx3">×238</b></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <div class="frame-meta">
+      <span>● single dominant element · radial accent · context block at bottom</span>
+      <span>recordable cleanly · same modal rules</span>
+    </div>
+  </div>
+
+<script type="module">
+import { animate, createTimeline, utils, stagger } from "https://esm.sh/animejs@4.1.4";
+
+const number    = document.getElementById("number");
+const caption   = document.getElementById("caption");
+const ctx1      = document.getElementById("ctx1");
+const ctx2      = document.getElementById("ctx2");
+const ctx3      = document.getElementById("ctx3");
+const burst     = document.getElementById("burst");
+const wrap      = document.getElementById("wrap");
+const stage     = document.getElementById("stage");
+
+function fit() {
+  const r = wrap.getBoundingClientRect();
+  const k = Math.min(r.width / 1080, r.height / 1920);
+  stage.style.transform = `scale(${k})`;
+}
+fit(); addEventListener("resize", fit);
+
+// Build burst particles (24 dots fanning out from centre)
+const N = 24;
+for (let i = 0; i < N; i++) {
+  const p = document.createElement("span");
+  p.className = "particle";
+  p.style.left = "50%"; p.style.top = "50%";
+  burst.appendChild(p);
+}
+const particles = burst.querySelectorAll(".particle");
+
+async function loop() {
+  while (true) {
+    // ── tick a counter from 0 to 2380 with easing ──
+    const target = { v: 0 };
+    utils.set(number, { scale: 0.92, opacity: 0 });
+    utils.set(caption, { opacity: 0, translateY: 12 });
+    utils.set([ctx1, ctx2, ctx3], { opacity: 0, translateX: -16 });
+
+    const tl = createTimeline({ defaults: { ease: "out(3)" } });
+    tl.add(number,  { opacity: [0, 1], scale: [0.92, 1], duration: 500 }, 0)
+      .add(caption, { opacity: [0, 1], translateY: [12, 0], duration: 400 }, 300)
+      .add(target,  { v: 2380, duration: 1800,
+          onUpdate: () => { number.textContent = Math.round(target.v).toLocaleString(); }
+        }, 200)
+      .add([ctx1, ctx2, ctx3], { opacity: [0, 1], translateX: [-16, 0],
+          duration: 380, delay: stagger(140) }, 1000);
+
+    // pulse + burst on landing
+    tl.add(number, { scale: [1, 1.08, 1], duration: 520, ease: "out(2)" }, 2050);
+
+    tl.add(particles, {
+      translateX: () => (Math.random() - 0.5) * 1200,
+      translateY: () => (Math.random() - 0.5) * 1400,
+      opacity:    [{ from: 0, to: 1, duration: 120 }, { from: 1, to: 0, duration: 700 }],
+      scale:      [{ from: 0.4, to: 1.4 }, { from: 1.4, to: 0.2 }],
+      duration: 820,
+      delay: stagger(8),
+      ease: "out(2)",
+    }, 2050);
+
+    await tl;
+
+    // hold a bit
+    await new Promise(r => setTimeout(r, 1400));
+
+    // fade out before restart
+    await animate([number, caption, ctx1, ctx2, ctx3], {
+      opacity: [1, 0], translateY: [0, -10], duration: 380, ease: "in(2)",
+    });
+  }
+}
+loop();
+</script>
+</body>
+</html>

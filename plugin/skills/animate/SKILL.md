@@ -16,6 +16,14 @@ User says any of:
 
 If the request looks decorative (hero animations, scroll parallax, page-load reveals), defer to the `frontend-design` skill instead.
 
+## How discovery works (the meta-principle)
+
+**Every visual decision is a guided choice, never an imposition.** The agent presents 2-4 explicit options for each decision, names one as recommended (with a one-sentence reason), and offers an opt-in browser preview whenever the choice is visually distinguishable. The user picks. If the user says *"you decide"*, the agent picks the recommended option and **announces** it ("voy con Voltage por X"); never silent.
+
+This applies to every step below: topic, pattern, palette, typography, complexity, output mode, layout variant, interactivity, export resolution/fps/aspect. If you find yourself making a visual decision the user did not pick, stop and ask — even if the choice feels obviously right.
+
+The only thing the skill *imposes* (non-negotiable) is the hard rules in [§ The 3 hard rules](#the-3-hard-rules): motion = pedagogy, one focal point, always replayable.
+
 ## 5-step discovery protocol (always start here)
 
 Before writing code, ask the user. Default to "you choose" if they say so — pick the highest-ranking match and explain why in one sentence.
@@ -24,14 +32,72 @@ Before writing code, ask the user. Default to "you choose" if they say so — pi
 
 **2 — Pattern.** Show 3-4 patterns from the catalog the topic fits, with one-line previews. See [`patterns/_index.md`](./patterns/_index.md). Recommend one based on the topic.
 
+> **Optional visual preview.** Before locking the pattern, ask: *"Want to see a 10-second example of each in your browser before deciding?"* — if yes, open the matching reference HTMLs via the OS default opener (`open` on macOS, `xdg-open` on Linux). The skill ships with examples for patterns A, B, M, N, O, P (see [`previews/_index.md`](./previews/_index.md)). For patterns without a pre-built example, skip the offer and describe in words. If the user says no, continue without the preview.
+
 **3 — Visual style.**
-- **Palette**: propose 3 alternatives — Voltage (default), Editorial, Neon dark. Full options in [`library/colors.md`](./library/colors.md).
-- **Typography**: propose 3 pairings — Geist+Geist Mono (default), Fraunces+JetBrains Mono, Space Grotesk+IBM Plex Mono. See [`library/typography.md`](./library/typography.md).
+- **Palette**: propose 3 alternatives — Voltage (default), Editorial, Neon dark. Full options in [`library/colors.md`](./library/colors.md). **Optional preview**: ask *"Want to see each palette side-by-side in your browser?"* — if yes, open the 3 HTML swatches at [`previews/palettes/`](./previews/palettes/) one by one (or all 3 at once).
+- **Typography**: propose 3 pairings — Geist+Geist Mono (default), Fraunces+JetBrains Mono, Space Grotesk+IBM Plex Mono. See [`library/typography.md`](./library/typography.md). **Optional preview**: open the 3 HTML samples at [`previews/typography/`](./previews/typography/).
 - **Icons/images**: ask whether the user (a) provides assets, (b) wants Claude to find them, or (c) accepts AI-drawn SVG. See [`library/icons.md`](./library/icons.md).
 
 **4 — Complexity.** "How many steps / components? (4-6 digestible, 8-12 thorough, 15+ chapter it)."
 
-**5 — Interactivity + export.** Confirm base controls (Play/Pause/Restart/Speed) are always included. Ask about extras: path selector, step-through mode, annotations, **export to video** (then resolution/fps/aspect ratio — see [`library/export.md`](./library/export.md)).
+**5 — Output mode + interactivity + export.**
+
+> **5a — Output mode (ask this FIRST in step 5, before anything else).** The two modes are **mutually exclusive within a single widget** — pick ONE; if the user needs both, that's two widgets generated in sequence, not a hybrid option.
+>
+> - **Browser-native** — the user opens the HTML, reads + interacts. The layout is a **vertical scroll** with full-width step cards, infinite height, free aspect ratio. Optimised for reading. **NOT suitable for video export** (recording produces a long thin file with scroll, unusable for social/landscape).
+> - **Video-target** — the layout fits a **single fixed frame** (16:9 / 9:16 / 1:1) with no scroll. Animation reveals content *inside* the frame: cursor descends, layers expand/collapse in place, cards appear and disappear; the camera does not move. The Export button + agent-side renderer produce a usable WebM/MP4.
+>
+> **Present exactly two options. Do not offer "both" / "either" / "let me decide later" / "do both separately" as a single choice** — these create ambiguous geometry and the widget ends up serving neither use well. If the user truly needs both, ask which they want NOW; after delivering that widget, offer to generate the other variant as a separate file.
+>
+> **Optional visual preview.** Before locking the mode, ask: *"Want to see a live example of each in your browser? They look very different."* — if yes, open the three HTML demos (browser-native + video 16:9 + video 9:16) via the OS opener (`open` on macOS, `xdg-open` on Linux):
+> - `previews/output-modes/browser-native.html`
+> - `previews/output-modes/video-target-16-9.html`
+> - `previews/output-modes/video-target-9-16.html`
+>
+> Each demo is a fully animated mini-example of the *same* topic (a transformer pipeline) so the user can directly compare how the geometry differs.
+>
+> **Defaults (use when the user did not pick explicitly):**
+> - Verbs "understand / explain / learn / study / tutorial / docs" → browser-native
+> - Verbs "reel / short / video / post / share / social / youtube / tiktok / instagram" → video-target
+> - Didactic family (A-L) without social verbs → browser-native
+> - Content-creator family (M-P) → video-target
+>
+> Full layout rules in [`library/output-modes.md`](./library/output-modes.md).
+
+**5b — Layout variant (sub-shape within the chosen output mode).** Once mode + aspect are decided, **the geometry still has many valid shapes** depending on the pattern. Present 2-3 layout variants with a recommendation:
+
+| Pattern family | Layout variants offered in video-target |
+|---|---|
+| **Flow / pipeline** (A, B, I, K) | `flow` — header + title + focal + token-stream + progress (default); `stack-compact` — all steps visible as mini-cards, current expanded; `cursor-timeline` — vertical timeline with cursor descending |
+| **Comparison** (D) | `split-horizontal` — top vs bottom (default for 9:16); `split-vertical` — left vs right (default for 16:9) |
+| **Algorithm / cursor** (C) | `data-structure-focus` — full-frame structure + cursor (default); `code-and-vis` — split code left + viz right (16:9 only) |
+| **Math reveal** (E) | `formula-centered` — formula grows term-by-term in middle; `derivation-stack` — each step appears below the previous |
+| **Mechanical / orbital / particles** (F, G, H) | `fullscreen-system` — system fills the frame; `system-plus-caption` — system + step caption at bottom |
+| **Timeline / sequence** (L) | `horizontal-axis` — left-to-right (default for 16:9); `vertical-axis` — top-to-bottom (default for 9:16) |
+| **Geo / map** (J) | `full-map` — map fills frame; `map-plus-overlay` — map + step caption + data badge |
+| **Text effects** (M) | `text-fullscreen` — text fills frame; `text-with-tag` — text + small tag below |
+| **Counter / clock** (N) | `big-number-centered` — number is 60-70% of frame height; `counter-plus-context` — number + label below |
+| **Shape morph** (O) | `shape-fullscreen` — single morphing shape; `shape-grid` — 4 shapes in 2×2 grid morphing in sync |
+| **Line drawing** (P) | `line-fullscreen` — single trace; `line-plus-label` — trace + caption |
+
+Recommend the *default* listed above for the chosen pattern, but let the user pick. If they pick something unusual, ask why (might lead to a better recommendation).
+
+**5c — Base controls.** Confirm Play/Pause/Restart/Speed are always included.
+
+**5d — Extras.** Path selector, step-through mode, annotations.
+
+**5e — Export.** Only if video-target was chosen in 5a, ask resolution/fps/aspect ratio — see [`library/export.md`](./library/export.md). For browser-only, skip export questions (the in-widget Export button still works, but warn the user the output won't be a clean video without rebuilding in video-target mode).
+
+### Closing the discovery — keep it user-oriented
+
+When the 5 steps are done, summarize the decisions in **the user's language** in 2-3 short sentences, framed by *what they're about to see* — never by what docs / libraries / cheatsheets you're about to read. Internal preparation is invisible to the user.
+
+❌ Bad: "Decisiones tomadas. Voy a leer la doc del patrón I, las librerías de estilo y el cheatsheet de Anime.js v4 antes de escribir el widget."
+
+✅ Good: "Listo. Voy a armarte una animación del flujo del transformer paso a paso — input → tokens → embeddings → atención → salida — en paleta Voltage, tipografía Geist. Te paso el preview en el navegador en un momento."
+
+Format: (a) what they'll see, (b) which style, (c) when/how they get it.
 
 ## The 3 hard rules
 
@@ -76,6 +142,7 @@ For creator content the user picks the effect directly — there's rarely a "wro
 
 ## Shared style references
 
+- [`library/output-modes.md`](./library/output-modes.md) — browser-native vs video-target layout rules (decided in step 5a)
 - [`library/colors.md`](./library/colors.md) — 3 palette presets + semantic tones + path colors
 - [`library/typography.md`](./library/typography.md) — 3 typography pairings + role mapping
 - [`library/icons.md`](./library/icons.md) — emoji vs Lucide vs custom SVG vs user-provided

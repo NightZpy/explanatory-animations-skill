@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Palette preview · Neon dark</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root {
+    --paper:#0f0f17; --paper-2:#161624; --card:#1f1f33;
+    --ink:#f4f4f5; --ink-2:#d4d4d8; --ink-3:#a1a1aa; --ink-4:#71717a;
+    --border:#2d2d44; --border-2:#3d3d5c;
+    --accent:#22d3ee; --accent-bg:rgba(34,211,238,.15); --accent-ink:#67e8f9;
+    --accent-glow:rgba(34,211,238,.55); --accent-2:#e879f9;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin:0; min-height:100vh; background:var(--paper); color:var(--ink);
+    font: 15px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+    padding:48px 32px; display:flex; flex-direction:column; gap:40px; align-items:center;
+  }
+  h1 { font-size:28px; font-weight:600; letter-spacing:-0.02em; margin:0; }
+  .sub { color:var(--ink-3); font-size:14px; margin-top:4px; }
+  .wrap { width:min(880px,100%); display:flex; flex-direction:column; gap:32px; }
+  .swatches { display:grid; grid-template-columns:repeat(auto-fill,minmax(140px,1fr)); gap:8px; }
+  .swatch { background:var(--card); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+  .swatch .chip { height:64px; }
+  .swatch .meta { padding:8px 10px; font-size:11px; color:var(--ink-3); display:flex; flex-direction:column; gap:2px; }
+  .swatch .meta strong { color:var(--ink); font-size:12px; font-weight:600; }
+  .demo { background:var(--paper-2); border:1px solid var(--border); border-radius:14px; padding:24px;
+    display:flex; flex-direction:column; gap:20px; }
+  .demo-title { font-size:12px; text-transform:uppercase; letter-spacing:0.12em; color:var(--ink-3); }
+  .nodes { display:flex; gap:14px; align-items:center; flex-wrap:wrap; }
+  .node { background:var(--card); border:1px solid var(--border-2); border-radius:10px; padding:14px 18px;
+    display:flex; align-items:center; gap:10px; font-size:14px; font-weight:500; color:var(--ink-2); }
+  .node.active {
+    border-color:var(--accent); background:var(--accent-bg); color:var(--accent-ink);
+    box-shadow: 0 0 0 4px var(--accent-glow);
+  }
+  .step { width:22px; height:22px; border-radius:50%; background:var(--paper); color:var(--ink-2);
+    display:grid; place-items:center; font-size:11px; font-weight:600; border:1px solid var(--border-2); }
+  .node.active .step { background:var(--accent); color:var(--paper); border-color:var(--accent); }
+  .arrow { color:var(--ink-4); font-size:18px; }
+</style>
+</head>
+<body>
+  <div>
+    <h1>Neon dark</h1>
+    <div class="sub">Pitch black + electric cyan — security, sci-fi, "in the dark"</div>
+  </div>
+  <div class="wrap">
+    <div class="swatches">
+      <div class="swatch"><div class="chip" style="background:var(--paper)"></div><div class="meta"><strong>paper</strong><span>#0f0f17</span></div></div>
+      <div class="swatch"><div class="chip" style="background:var(--card)"></div><div class="meta"><strong>card</strong><span>#1f1f33</span></div></div>
+      <div class="swatch"><div class="chip" style="background:var(--ink)"></div><div class="meta"><strong>ink</strong><span>#f4f4f5</span></div></div>
+      <div class="swatch"><div class="chip" style="background:var(--ink-3)"></div><div class="meta"><strong>ink-3</strong><span>#a1a1aa</span></div></div>
+      <div class="swatch"><div class="chip" style="background:var(--border)"></div><div class="meta"><strong>border</strong><span>#2d2d44</span></div></div>
+      <div class="swatch"><div class="chip" style="background:var(--accent)"></div><div class="meta"><strong>accent</strong><span>#22d3ee</span></div></div>
+      <div class="swatch"><div class="chip" style="background:var(--accent-2)"></div><div class="meta"><strong>accent-2</strong><span>#e879f9</span></div></div>
+    </div>
+
+    <div class="demo">
+      <div class="demo-title">In context</div>
+      <div class="nodes">
+        <div class="node"><span class="step">1</span> Idle</div>
+        <span class="arrow">→</span>
+        <div class="node active"><span class="step">2</span> You are here</div>
+        <span class="arrow">→</span>
+        <div class="node"><span class="step">3</span> Next</div>
+        <span class="arrow">→</span>
+        <div class="node"><span class="step">4</span> Done</div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
