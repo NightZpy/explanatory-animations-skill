@@ -62,36 +62,50 @@ claude --plugin-dir .
 
 ### D · Local marketplace (best for testing the full install flow)
 
-The repo ships a `.claude-plugin/marketplace.json`, so the same clone doubles as a single-plugin marketplace. Use this to exercise the exact `/plugin install` pipeline before submitting to a public marketplace:
+The repo ships a `.claude-plugin/marketplace.json`, so the same clone doubles as a single-plugin marketplace. Works **entirely from the shell** — no need to enter Claude Code interactive mode. Use this to exercise the exact install pipeline Anthropic's review uses:
 
 ```bash
 git clone https://github.com/NightZpy/explanatory-animations-skill.git
 cd explanatory-animations-skill
-claude
-```
 
-Inside Claude Code:
+# 1. Validate manifests (same check Anthropic's pipeline runs)
+claude plugin validate .
+claude plugin validate ./plugin
 
-```
-/plugin marketplace add .
-/plugin install explanatory-animations@nightzpy-plugins
-/plugin                          # verify the plugin appears installed
+# 2. Add this clone as a marketplace
+claude plugin marketplace add ./
+
+# 3. Install the plugin from it
+claude plugin install explanatory-animations@nightzpy-plugins
+
+# 4. Verify
+claude plugin list                         # should show explanatory-animations@nightzpy-plugins enabled
+claude plugin details explanatory-animations   # component inventory + projected token cost
 ```
 
 After pulling new commits:
 
-```
-/plugin marketplace update nightzpy-plugins
-```
-
-Remove:
-
-```
-/plugin uninstall explanatory-animations
-/plugin marketplace remove nightzpy-plugins
+```bash
+claude plugin marketplace update nightzpy-plugins
+claude plugin update explanatory-animations
 ```
 
-This is the cleanest way to **verify the plugin structure is correct** — Claude Code copies the plugin to its cache and runs the same loader Anthropic's review uses.
+Cleanup:
+
+```bash
+claude plugin uninstall explanatory-animations
+claude plugin marketplace remove nightzpy-plugins
+```
+
+Inside Claude Code, the same flow works via slash commands:
+
+```
+/plugin marketplace add ./
+/plugin install explanatory-animations@nightzpy-plugins
+/plugin                          # opens the plugin manager UI
+```
+
+This is the cleanest way to **verify the plugin structure is correct** before submitting to a public marketplace — Claude Code copies the plugin to its cache and runs the same loader Anthropic's review uses.
 
 After install, the plugin exposes 5 namespaced skills under `/`:
 
