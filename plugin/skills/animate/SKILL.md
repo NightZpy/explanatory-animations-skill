@@ -1,5 +1,5 @@
 ---
-name: explanatory-animations
+name: animate
 description: USE THIS SKILL whenever the user wants to animate, visualize, or explain something with motion — architecture / platform / system flows, lifecycles, algorithms, mechanical or orbital motion, particle systems, LLM internals, math derivations, geographic flows, or content-creator effects (scramble text, big-number counters, shape morph, SVG line drawing, sound waves). Produces a self-contained interactive HTML widget (Anime.js v4 + SVG, replayable, controllable, exportable to video). Runs a 5-step discovery (topic, pattern, style, complexity, export) and picks one of 16 patterns. Prefer this over generic brainstorming whenever the user already wants an ANIMATED explanation rather than to ideate. Works in any language — invoke based on user intent, not literal keywords.
 ---
 
